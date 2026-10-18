@@ -4,16 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-
-// Pantallas en com.example.mpaz_neb.screens
+import com.example.mpaz_neb.screens.AudioScreen
+import com.example.mpaz_neb.screens.CamaraScreen
 import com.example.mpaz_neb.screens.HomeScreen
+import com.example.mpaz_neb.screens.LecturaScreen
+import com.example.mpaz_neb.screens.ProgresoScreen
 import com.example.mpaz_neb.screens.StudentCodeScreen
 import com.example.mpaz_neb.screens.TeacherLoginScreen
-
-// Pantallas en com.example.mpaz_neb.ui.theme.screens
-import com.example.mpaz_neb.screens.LecturaScreen
 import com.example.mpaz_neb.ui.theme.screens.MatematicaScreen
-
 import com.example.mpaz_neb.viewmodel.MainViewModel
 
 @Composable
@@ -50,18 +48,55 @@ fun AppNavigation(
             LecturaScreen(
                 navController = navController,
                 viewModel = viewModel
-
             )
         }
 
-        // Módulo de Matemática
         composable(Screen.Matematica.route) {
             MatematicaScreen(
                 navController = navController,
                 viewModel = viewModel,
-                onNavigate = TODO()
+                onNavigate = { evento ->
+                    when (evento) {
+                        is NavigationEvent.NavigateTo -> {
+                            navController.navigate(evento.route.route) {
+                                launchSingleTop = evento.singleTop
+
+                                evento.popupToRoute?.let { destino ->
+                                    popUpTo(destino.route) {
+                                        inclusive = evento.inclusive
+                                    }
+                                }
+                            }
+                        }
+
+                        NavigationEvent.PopBackStack -> {
+                            navController.popBackStack()
+                        }
+
+                        NavigationEvent.NavigateUp -> {
+                            navController.navigateUp()
+                        }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Progreso.route) {
+            ProgresoScreen(
+                navController = navController
+            )
+        }
+
+        composable(Screen.Camara.route) {
+            CamaraScreen(
+                navController = navController
+            )
+        }
+
+        composable(Screen.Audio.route) {
+            AudioScreen(
+                navController = navController
             )
         }
     }
 }
-
