@@ -1,157 +1,364 @@
 package com.example.mpaz_neb.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
 import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.viewmodel.MainViewModel
+import com.example.mpaz_neb.viewmodel.StudentCodeViewModel
+import kotlinx.coroutines.launch
+
+private val CodigoTexto = Color(0xFF24374B)
+private val CodigoTextoSecundario = Color(0xFF526273)
+private val CodigoAzul = Color(0xFF2456A6)
+
+private data class OpcionActividadCodigo(
+    val titulo: String,
+    val descripcion: String,
+    val icono: ImageVector,
+    val fondo: Color,
+    val color: Color,
+    val destino: Screen
+)
 
 @Composable
 fun StudentCodeScreen(
     navController: NavController,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    studentCodeViewModel: StudentCodeViewModel = obtenerViewModel()
 ) {
-    var code by remember { mutableStateOf("MPAZ-402") }
-    val bluePrimary = Color(0xFF2563EB)
+    val estado by studentCodeViewModel.uiState.collectAsState()
+    val focusManager = LocalFocusManager.current
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+
+    val actividades = listOf(
+        OpcionActividadCodigo(
+            titulo = "Lectura",
+            descripcion = "Leer y responder",
+            icono = Icons.Default.AutoStories,
+            fondo = Color(0xFFE5EEF9),
+            color = CodigoAzul,
+            destino = Screen.Lectura
+        ),
+        OpcionActividadCodigo(
+            titulo = "Matemática",
+            descripcion = "Practicar números",
+            icono = Icons.Default.Calculate,
+            fondo = Color(0xFFFFE8CB),
+            color = Color(0xFF85460D),
+            destino = Screen.Matematica
+        ),
+        OpcionActividadCodigo(
+            titulo = "Tomar foto",
+            descripcion = "Mostrar mi trabajo",
+            icono = Icons.Default.CameraAlt,
+            fondo = Color(0xFFE0EFE7),
+            color = Color(0xFF176B60),
+            destino = Screen.Camara
+        ),
+        OpcionActividadCodigo(
+            titulo = "Mi voz",
+            descripcion = "Grabar y escuchar",
+            icono = Icons.Default.Mic,
+            fondo = Color(0xFFF9E4E2),
+            color = Color(0xFF963C46),
+            destino = Screen.Audio
+        )
+    )
+
+    fun abrirActividad(destino: Screen) {
+        if (studentCodeViewModel.validarCodigo()) {
+            focusManager.clearFocus()
+
+            navController.navigate(destino.route) {
+                launchSingleTop = true
+            }
+        } else {
+            scope.launch {
+                scrollState.animateScrollTo(0)
+            }
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8FAFC)
+        color = Color(0xFFFFFAF2)
     ) {
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+                .safeDrawingPadding()
+                .imePadding()
         ) {
-            // Botón Volver a la pantalla de inicio
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                TextButton(onClick = { navController.popBackStack() }) {
-                    Text("← Volver", color = bluePrimary, fontSize = 14.sp)
-                }
-            }
+            val columnas = if (maxWidth >= 760.dp) 4 else 2
 
-            // Contenido Central
             Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .widthIn(max = 1000.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(
+                        onClick = { navController.popBackStack() },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = CodigoAzul
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = null
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text("Volver")
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFFE5EEF9)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.VpnKey,
+                        contentDescription = null,
+                        tint = CodigoAzul,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(32.dp)
+                    )
+                }
+
                 Text(
-                    text = "Ingresa tu código",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Pídele el código de sesión a tu\nasistente o profesora",
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B),
+                    text = "¡Tu aventura comienza!",
+                    fontSize = 26.sp,
+                    lineHeight = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = CodigoTexto,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
-
-                // Input de Código
-                OutlinedTextField(
-                    value = code,
-                    onValueChange = { code = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    textStyle = LocalTextStyle.current.copy(
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = Color(0xFF0F172A)
-                    ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    )
+                Text(
+                    text = "Escribe el código que te entregó tu profesora " +
+                            "y elige una actividad.",
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp,
+                    color = CodigoTextoSecundario,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Botón Comenzar con validación y guardado
-                Button(
-                    onClick = {
-                        if (code.isNotBlank()) {
-                            // Guardar el código en el ViewModel (si tienes una función para ello)
-                            // viewModel.setStudentCode(code)
-
-                            // Navegar a la pantalla de Lectura
-                            navController.navigate(Screen.Lectura.route) {
-                                // Evita acumular pantallas duplicadas en la pila de navegación
-                                launchSingleTop = true
-                            }
-                        }
-                    },
-                    enabled = code.isNotBlank(), // Deshabilita el botón si el código está vacío
+                Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = bluePrimary,
-                        disabledContainerColor = bluePrimary.copy(alpha = 0.5f)
+                        .widthIn(max = 500.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(22.dp),
+                    color = Color.White,
+                    border = BorderStroke(
+                        1.dp,
+                        Color(0xFFE0E5E9)
                     )
-                ) {
-                    Text(
-                        text = "¡COMENZAR!",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Tarjeta informativa inferior
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "¿No tienes un código?",
+                            text = "Mi código de sesión",
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = Color(0xFF0F172A)
+                            color = CodigoTexto
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Tu asistente de aula te asignará una actividad de Lectura o Matemática para comenzar la sesión de hoy.",
-                            fontSize = 12.sp,
-                            color = Color(0xFF64748B),
-                            textAlign = TextAlign.Center
+
+                        OutlinedTextField(
+                            value = estado.codigo,
+                            onValueChange = studentCodeViewModel::actualizarCodigo,
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("Código") },
+                            shape = RoundedCornerShape(14.dp),
+                            isError = estado.errorCodigo != null,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.VpnKey,
+                                    contentDescription = null
+                                )
+                            },
+                            trailingIcon = {
+                                if (estado.errorCodigo != null) {
+                                    Icon(
+                                        imageVector = Icons.Default.Error,
+                                        contentDescription = "Error en el código"
+                                    )
+                                }
+                            },
+                            supportingText = {
+                                estado.errorCodigo?.let { mensaje ->
+                                    Text(text = mensaje)
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Characters,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = { focusManager.clearFocus() }
+                            ),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = CodigoTexto,
+                                unfocusedTextColor = CodigoTexto,
+                                errorTextColor = CodigoTexto,
+                                focusedBorderColor = CodigoAzul,
+                                unfocusedBorderColor = Color(0xFF8796A5),
+                                focusedLabelColor = CodigoAzul,
+                                unfocusedLabelColor = CodigoTextoSecundario,
+                                focusedLeadingIconColor = CodigoAzul,
+                                unfocusedLeadingIconColor = CodigoTextoSecundario,
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                errorContainerColor = Color.White
+                            )
                         )
                     }
                 }
+
+                Text(
+                    text = "¿Qué vamos a hacer hoy?",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = CodigoTexto,
+                    textAlign = TextAlign.Center
+                )
+
+                Column(
+                    modifier = Modifier
+                        .widthIn(
+                            max = if (columnas == 4) 1000.dp else 560.dp
+                        )
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    actividades.chunked(columnas).forEach { fila ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            fila.forEach { actividad ->
+                                TarjetaActividadCodigo(
+                                    actividad = actividad,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        abrirActividad(actividad.destino)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    text = "¿No tienes código? Pídeselo a tu profesora o asistente.",
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp,
+                    color = CodigoTextoSecundario,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "Escuela Marcela Paz • San Bernardo",
+                    fontSize = 12.sp,
+                    color = CodigoTextoSecundario,
+                    textAlign = TextAlign.Center
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaActividadCodigo(
+    actividad: OpcionActividadCodigo,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 154.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = actividad.fondo,
+            contentColor = actividad.color
+        ),
+        contentPadding = PaddingValues(
+            horizontal = 10.dp,
+            vertical = 20.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                imageVector = actividad.icono,
+                contentDescription = null,
+                modifier = Modifier.size(36.dp)
+            )
 
             Text(
-                text = "Escuela Particular Marcela Paz • San Bernardo",
-                fontSize = 11.sp,
-                color = Color(0xFF94A3B8)
+                text = actividad.titulo,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = actividad.descripcion,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                textAlign = TextAlign.Center
             )
         }
     }
