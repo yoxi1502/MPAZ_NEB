@@ -12,6 +12,7 @@ data class LecturaUiState(
     val preguntas: List<PreguntaLectura> = emptyList(),
     val indiceActual: Int = 0,
     val respuestaSeleccionada: String? = null,
+    val respuestaComprobada: Boolean = false,
     val aciertos: Int = 0,
     val finalizada: Boolean = false,
     val guardando: Boolean = false,
