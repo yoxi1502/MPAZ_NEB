@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.screens
+package com.example.mpaz_neb.ui.theme.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -165,7 +165,7 @@ fun TeacherLoginScreen(
                     if (teacherLoginViewModel.validarFormulario()) {
                         focusManager.clearFocus()
 
-                        navController.navigate(Screen.Progreso.route) {
+                        navController.navigate(Screen.AssignActivity.route) {
                             popUpTo(Screen.Home.route) {
                                 inclusive = false
                             }

@@ -9,9 +9,11 @@ import com.example.mpaz_neb.screens.CamaraScreen
 import com.example.mpaz_neb.screens.HomeScreen
 import com.example.mpaz_neb.screens.LecturaScreen
 import com.example.mpaz_neb.screens.ProgresoScreen
-import com.example.mpaz_neb.screens.StudentCodeScreen
-import com.example.mpaz_neb.screens.TeacherLoginScreen
+import com.example.mpaz_neb.ui.theme.screens.AssignActivityScreen
 import com.example.mpaz_neb.ui.theme.screens.MatematicaScreen
+import com.example.mpaz_neb.ui.theme.screens.SesionEnCursoScreen
+import com.example.mpaz_neb.ui.theme.screens.StudentCodeScreen
+import com.example.mpaz_neb.ui.theme.screens.TeacherLoginScreen
 import com.example.mpaz_neb.viewmodel.MainViewModel
 
 @Composable
@@ -41,6 +43,18 @@ fun AppNavigation(
             StudentCodeScreen(
                 navController = navController,
                 viewModel = viewModel
+            )
+        }
+
+        composable(Screen.AssignActivity.route) {
+            AssignActivityScreen(
+                navController = navController
+            )
+        }
+
+        composable(Screen.SesionEnCurso.route) {
+            SesionEnCursoScreen(
+                navController = navController
             )
         }
 

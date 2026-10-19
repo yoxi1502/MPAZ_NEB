@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.screens
+package com.example.mpaz_neb.ui.theme.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -8,7 +8,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CameraAlt
@@ -17,9 +17,9 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,10 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
+import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.viewmodel.MainViewModel
 import com.example.mpaz_neb.viewmodel.StudentCodeViewModel
-import kotlinx.coroutines.launch
 
 private val CodigoTexto = Color(0xFF24374B)
 private val CodigoTextoSecundario = Color(0xFF526273)
@@ -60,7 +60,10 @@ fun StudentCodeScreen(
     val estado by studentCodeViewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(estado.errorCodigo) {
+        if (estado.errorCodigo != null) scrollState.animateScrollTo(0)
+    }
 
     val actividades = listOf(
         OpcionActividadCodigo(
@@ -97,17 +100,20 @@ fun StudentCodeScreen(
         )
     )
 
-    fun abrirActividad(destino: Screen) {
-        if (studentCodeViewModel.validarCodigo()) {
+    fun abrirActividad(destino: Screen? = null) {
+        val moduloRequerido = when (destino) {
+            Screen.Lectura -> ModuloActividad.LECTURA
+            Screen.Matematica -> ModuloActividad.MATEMATICA
+            else -> null
+        }
+        studentCodeViewModel.validarCodigo(moduloRequerido) { sesion ->
             focusManager.clearFocus()
-
-            navController.navigate(destino.route) {
-                launchSingleTop = true
+            val ruta = destino?.route ?: when (sesion?.modulo) {
+                ModuloActividad.LECTURA -> Screen.Lectura.route
+                ModuloActividad.MATEMATICA -> Screen.Matematica.route
+                null -> Screen.Lectura.route
             }
-        } else {
-            scope.launch {
-                scrollState.animateScrollTo(0)
-            }
+            navController.navigate(ruta) { launchSingleTop = true }
         }
     }
 
@@ -143,7 +149,7 @@ fun StudentCodeScreen(
                         )
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null
                         )
 
@@ -178,7 +184,7 @@ fun StudentCodeScreen(
 
                 Text(
                     text = "Escribe el código que te entregó tu profesora " +
-                            "y elige una actividad.",
+                            "para abrir tu actividad asignada.",
                     fontSize = 15.sp,
                     lineHeight = 22.sp,
                     color = CodigoTextoSecundario,
@@ -212,6 +218,7 @@ fun StudentCodeScreen(
                             onValueChange = studentCodeViewModel::actualizarCodigo,
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
+                            enabled = !estado.validando,
                             label = { Text("Código") },
                             shape = RoundedCornerShape(14.dp),
                             isError = estado.errorCodigo != null,
@@ -264,6 +271,15 @@ fun StudentCodeScreen(
                     }
                 }
 
+                Button(
+                    onClick = { abrirActividad() },
+                    enabled = !estado.validando,
+                    modifier = Modifier.widthIn(max = 500.dp).fillMaxWidth().heightIn(min = 56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CodigoAzul)
+                ) {
+                    Text(if (estado.validando) "Comprobando…" else "Comenzar actividad asignada")
+                }
+
                 Text(
                     text = "¿Qué vamos a hacer hoy?",
                     fontSize = 22.sp,
@@ -288,6 +304,7 @@ fun StudentCodeScreen(
                             fila.forEach { actividad ->
                                 TarjetaActividadCodigo(
                                     actividad = actividad,
+                                    enabled = !estado.validando,
                                     modifier = Modifier.weight(1f),
                                     onClick = {
                                         abrirActividad(actividad.destino)
@@ -320,11 +337,13 @@ fun StudentCodeScreen(
 @Composable
 private fun TarjetaActividadCodigo(
     actividad: OpcionActividadCodigo,
+    enabled: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.heightIn(min = 154.dp),
         shape = RoundedCornerShape(22.dp),
         colors = ButtonDefaults.buttonColors(
