@@ -17,41 +17,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = UserPreferencesRepository(application)
 
     // Estado para la carga inicial
-    var isLoading by mutableStateOf(true)
+    var assignedModule by mutableStateOf("Lectura")
+    var assignedLevel by mutableStateOf("2.° Año Básico")
+    var assignedTopic by mutableStateOf("Comprensión de lectura - Nivel 1")
+    var assignedStudent by mutableStateOf("Estudiante 04 - Aula B")
+    var generatedSessionCode by mutableStateOf("MPAZ-402")
         private set
 
-    // Estado del botón / modo activo recuperado desde DataStore
-    var isModoEspecialActive by mutableStateOf(false)
-        private set
-
-    // Estado para feedback animado
-    var showSuccessMessage by mutableStateOf(false)
-        private set
-
-    init {
-        // Carga inicial y escucha activa de DataStore (Parte 2)
-        viewModelScope.launch {
-            delay(1000) // Carga simulada (Parte 3)
-            repository.modoEspecialFlow.collect { guardado ->
-                isModoEspecialActive = guardado
-                isLoading = false
-            }
-        }
-    }
-
-    // Función que altera el estado y lo guarda persistentemente (Parte 2)
-    fun toggleModoEspecial(activo: Boolean) {
-        viewModelScope.launch {
-            isModoEspecialActive = activo
-
-            // Persistencia en DataStore Preferences
-            repository.guardarModoEspecial(activo)
-
-            // Feedback visual
-            showSuccessMessage = true
-            delay(2000)
-            showSuccessMessage = false
-        }
+    fun updateAssignment(module: String, level: String, topic: String, student: String) {
+        assignedModule = module
+        assignedLevel = level
+        assignedTopic = topic
+        assignedStudent = student
+        // Genera un código temporal dinámico o mantiene la convención
+        val randomNum = (100..999).random()
+        generatedSessionCode = "MPAZ-$randomNum"
     }
     // Agrega esto dentro de tu MainViewModel class:
 
