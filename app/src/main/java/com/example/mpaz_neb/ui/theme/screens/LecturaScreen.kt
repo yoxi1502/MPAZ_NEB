@@ -2,22 +2,44 @@ package com.example.mpaz_neb.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
-import com.example.mpaz_neb.ui.theme.components.NivelCard
+import com.example.mpaz_neb.model.LecturaUiState
 import com.example.mpaz_neb.viewmodel.LecturaViewModel
 import com.example.mpaz_neb.viewmodel.MainViewModel
+
+private val LecturaFondo = Color(0xFFFFFAF2)
+private val LecturaAzul = Color(0xFF2456A6)
+private val LecturaTexto = Color(0xFF24374B)
+private val LecturaSecundario = Color(0xFF526273)
+private val LecturaVerde = Color(0xFF176B60)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,14 +54,14 @@ fun LecturaScreen(
         mutableStateOf(false)
     }
 
-    val scrollState = rememberScrollState()
+    val scroll = rememberScrollState()
 
     LaunchedEffect(
         actividadIniciada,
         estado.indiceActual,
         estado.finalizada
     ) {
-        scrollState.scrollTo(0)
+        scroll.scrollTo(0)
     }
 
     BackHandler(
@@ -51,17 +73,22 @@ fun LecturaScreen(
     }
 
     Scaffold(
+        containerColor = LecturaFondo,
+        contentColor = LecturaTexto,
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        if (actividadIniciada) {
-                            "Practiquemos Lectura"
-                        } else {
-                            "Módulo de Lectura"
-                        }
+                        text = "Mi aventura de lectura",
+                        fontWeight = FontWeight.Bold
                     )
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = LecturaFondo,
+                    titleContentColor = LecturaTexto,
+                    navigationIconContentColor = LecturaAzul
+                ),
                 navigationIcon = {
                     IconButton(
                         enabled = !estado.guardando,
@@ -81,214 +108,559 @@ fun LecturaScreen(
                 }
             )
         }
-    ) { innerPadding ->
-        Column(
+    ) { padding ->
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(scrollState)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(padding)
         ) {
-            if (!actividadIniciada) {
-                Text(
-                    text = "¡Vamos a leer!",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
+            val pantallaAncha = maxWidth >= 760.dp
 
-                Text(
-                    text = "Selecciona la actividad. Lee el texto y responde tres preguntas.",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-
-                NivelCard(
-                    titulo = "Nivel 1: Comprensión lectora",
-                    subtitulo = estado.titulo,
-                    cardColor = MaterialTheme.colorScheme.secondaryContainer,
-                    textColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    onClick = {
-                        lecturaViewModel.reiniciarActividad()
-                        actividadIniciada = true
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .widthIn(max = 1100.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(scroll)
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                when {
+                    !actividadIniciada -> {
+                        InicioActividadLectura(
+                            titulo = estado.titulo,
+                            onComenzar = {
+                                lecturaViewModel.reiniciarActividad()
+                                actividadIniciada = true
+                            }
+                        )
                     }
-                )
-            } else if (estado.finalizada) {
-                Text(
-                    text = "¡Actividad terminada!",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
 
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Tu resultado",
-                            style = MaterialTheme.typography.titleLarge
+                    estado.finalizada -> {
+                        ResultadoLectura(
+                            estado = estado,
+                            onRepetir = lecturaViewModel::reiniciarActividad,
+                            onVolver = {
+                                actividadIniciada = false
+                            }
+                        )
+                    }
+
+                    else -> {
+                        val avance by animateFloatAsState(
+                            targetValue = if (estado.preguntas.isEmpty()) {
+                                0f
+                            } else {
+                                (
+                                        estado.indiceActual +
+                                                if (estado.respuestaComprobada) 1 else 0
+                                        ).toFloat() / estado.preguntas.size
+                            },
+                            label = "Avance de lectura"
                         )
 
                         Text(
-                            text = "${estado.aciertos} de ${estado.preguntas.size} respuestas correctas",
-                            style = MaterialTheme.typography.headlineSmall,
+                            text = "Pregunta ${estado.indiceActual + 1} " +
+                                    "de ${estado.preguntas.size}",
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
 
-                        Text(
-                            text = if (
-                                estado.aciertos == estado.preguntas.size
-                            ) {
-                                "¡Excelente comprensión del texto!"
-                            } else {
-                                "Puedes volver a leer el texto e intentarlo nuevamente."
-                            }
-                        )
-
-                        Text(
-                            text = "Resultado guardado en este dispositivo.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-
-                Button(
-                    onClick = lecturaViewModel::reiniciarActividad,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Repetir actividad")
-                }
-
-                OutlinedButton(
-                    onClick = { actividadIniciada = false },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Volver a las actividades")
-                }
-            } else {
-                val pregunta = estado.preguntas.getOrNull(
-                    estado.indiceActual
-                )
-
-                if (pregunta != null) {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                text = estado.titulo,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-
-                            Text(
-                                text = estado.texto,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = "Pregunta ${estado.indiceActual + 1} de ${estado.preguntas.size}",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Text(
-                        text = "Aciertos: ${estado.aciertos}",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Text(
-                        text = pregunta.enunciado,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    pregunta.opciones.forEach { opcion ->
-                        OutlinedButton(
-                            onClick = {
-                                lecturaViewModel.seleccionarRespuesta(opcion)
-                            },
-                            enabled = estado.respuestaSeleccionada == null,
+                        LinearProgressIndicator(
+                            progress = { avance },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 56.dp)
-                        ) {
-                            Text(
-                                text = opcion,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                    AnimatedVisibility(
-                        visible = estado.respuestaSeleccionada != null
-                    ) {
-                        val esCorrecta =
-                            estado.respuestaSeleccionada ==
-                                    pregunta.respuestaCorrecta
-
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (esCorrecta) {
-                                    MaterialTheme.colorScheme.secondaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.errorContainer
-                                },
-                                contentColor = if (esCorrecta) {
-                                    MaterialTheme.colorScheme.onSecondaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onErrorContainer
-                                }
-                            )
-                        ) {
-                            Text(
-                                text = if (esCorrecta) {
-                                    "¡Correcto! Muy bien."
-                                } else {
-                                    "La respuesta correcta es: ${pregunta.respuestaCorrecta}."
-                                },
-                                modifier = Modifier.padding(16.dp),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                    if (estado.guardando) {
-                        LinearProgressIndicator(
-                            modifier = Modifier.fillMaxWidth()
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(50)),
+                            color = LecturaAzul,
+                            trackColor = Color(0xFFE1E8F0)
                         )
-                    }
 
-                    estado.errorGuardado?.let { mensaje ->
-                        Text(
-                            text = mensaje,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
+                        if (pantallaAncha) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(24.dp)
+                            ) {
+                                TextoLectura(
+                                    estado = estado,
+                                    modifier = Modifier.weight(1f)
+                                )
 
-                    Button(
-                        onClick = lecturaViewModel::siguientePregunta,
-                        enabled = estado.respuestaSeleccionada != null &&
-                                !estado.guardando,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = when {
-                                estado.guardando -> "Guardando…"
-                                estado.errorGuardado != null ->
-                                    "Reintentar guardado"
-                                estado.indiceActual ==
-                                        estado.preguntas.lastIndex ->
-                                    "Ver resultado"
-                                else -> "Siguiente pregunta"
+                                PreguntaLecturaPanel(
+                                    estado = estado,
+                                    lecturaViewModel = lecturaViewModel,
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
-                        )
+                        } else {
+                            TextoLectura(
+                                estado = estado
+                            )
+
+                            PreguntaLecturaPanel(
+                                estado = estado,
+                                lecturaViewModel = lecturaViewModel
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun InicioActividadLectura(
+    titulo: String,
+    onComenzar: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = Color(0xFFE0EFE7)
+        ) {
+            Icon(
+                imageVector = Icons.Default.AutoStories,
+                contentDescription = null,
+                tint = LecturaVerde,
+                modifier = Modifier
+                    .padding(28.dp)
+                    .size(72.dp)
+            )
+        }
+
+        Text(
+            text = "¡Vamos a leer!",
+            fontSize = 30.sp,
+            fontWeight = FontWeight.ExtraBold
+        )
+
+        Text(
+            text = "Una historia, tres preguntas y mucho por descubrir.",
+            color = LecturaSecundario,
+            fontSize = 17.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Surface(
+            modifier = Modifier
+                .widthIn(max = 620.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = Color.White,
+            contentColor = LecturaTexto,
+            border = BorderStroke(
+                width = 1.dp,
+                color = Color(0xFFDCE4E9)
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "LECTURA · NIVEL 1",
+                    color = LecturaAzul,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = titulo,
+                    fontSize = 25.sp,
+                    lineHeight = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "1. Lee la historia con calma.\n" +
+                            "2. Elige tu respuesta.\n" +
+                            "3. Pulsa Comprobar respuesta.",
+                    fontSize = 18.sp,
+                    lineHeight = 30.sp
+                )
+
+                Button(
+                    onClick = onComenzar,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 58.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LecturaAzul,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "¡Comenzar lectura!",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TextoLectura(
+    estado: LecturaUiState,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        contentColor = LecturaTexto,
+        border = BorderStroke(
+            width = 1.dp,
+            color = Color(0xFFDCE4E9)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoStories,
+                    contentDescription = null,
+                    tint = LecturaVerde
+                )
+
+                Text(
+                    text = "Mi historia",
+                    color = LecturaVerde,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = estado.titulo,
+                fontSize = 24.sp,
+                lineHeight = 30.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = estado.texto,
+                fontSize = 20.sp,
+                lineHeight = 32.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun PreguntaLecturaPanel(
+    estado: LecturaUiState,
+    lecturaViewModel: LecturaViewModel,
+    modifier: Modifier = Modifier
+) {
+    val pregunta = estado.preguntas
+        .getOrNull(estado.indiceActual)
+        ?: return
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Piensa y elige",
+            color = LecturaAzul,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = pregunta.enunciado,
+            fontSize = 23.sp,
+            lineHeight = 30.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Column(
+            modifier = Modifier.selectableGroup(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            pregunta.opciones.forEachIndexed { indice, opcion ->
+                val seleccionada =
+                    estado.respuestaSeleccionada == opcion
+
+                val correcta =
+                    estado.respuestaComprobada &&
+                            opcion == pregunta.respuestaCorrecta
+
+                val incorrecta =
+                    estado.respuestaComprobada &&
+                            seleccionada &&
+                            !correcta
+
+                val color = when {
+                    correcta -> Color(0xFFE0EFE7)
+                    incorrecta -> Color(0xFFF9E4E2)
+                    seleccionada -> Color(0xFFE5EEF9)
+                    else -> Color.White
+                }
+
+                val fondo by animateColorAsState(
+                    targetValue = color,
+                    label = "Color de alternativa"
+                )
+
+                val borde = when {
+                    correcta -> LecturaVerde
+                    incorrecta -> Color(0xFF963C46)
+                    seleccionada -> LecturaAzul
+                    else -> Color(0xFFDCE4E9)
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = seleccionada,
+                            enabled = !estado.respuestaComprobada &&
+                                    !estado.guardando,
+                            role = Role.RadioButton,
+                            onClick = {
+                                lecturaViewModel.seleccionarRespuesta(opcion)
+                            }
+                        ),
+                    shape = RoundedCornerShape(18.dp),
+                    color = fondo,
+                    contentColor = LecturaTexto,
+                    border = BorderStroke(
+                        width = if (seleccionada || correcta) {
+                            2.dp
+                        } else {
+                            1.dp
+                        },
+                        color = borde
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .heightIn(min = 68.dp)
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White
+                        ) {
+                            Box(
+                                modifier = Modifier.size(36.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = ('A'.code + indice)
+                                        .toChar()
+                                        .toString(),
+                                    color = borde,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = opcion,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 18.sp,
+                            lineHeight = 26.sp
+                        )
+
+                        if (correcta) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Respuesta correcta",
+                                tint = LecturaVerde
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = estado.respuestaComprobada
+        ) {
+            val correcta =
+                estado.respuestaSeleccionada == pregunta.respuestaCorrecta
+
+            Surface(
+                color = if (correcta) {
+                    Color(0xFFE0EFE7)
+                } else {
+                    Color(0xFFFFE8CB)
+                },
+                contentColor = LecturaTexto,
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Text(
+                    text = if (correcta) {
+                        "¡Muy bien! Encontraste la respuesta."
+                    } else {
+                        "Sigamos aprendiendo. La respuesta es: " +
+                                "${pregunta.respuestaCorrecta}."
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    fontSize = 18.sp,
+                    lineHeight = 26.sp
+                )
+            }
+        }
+
+        estado.errorGuardado?.let { mensaje ->
+            Text(
+                text = mensaje,
+                color = Color(0xFF963C46),
+                fontSize = 16.sp
+            )
+        }
+
+        if (estado.guardando) {
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Button(
+            onClick = {
+                if (estado.respuestaComprobada) {
+                    lecturaViewModel.siguientePregunta()
+                } else {
+                    lecturaViewModel.comprobarRespuesta()
+                }
+            },
+            enabled = estado.respuestaSeleccionada != null &&
+                    !estado.guardando,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 60.dp),
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = LecturaAzul,
+                contentColor = Color.White
+            )
+        ) {
+            Text(
+                text = when {
+                    estado.guardando -> "Guardando…"
+                    estado.errorGuardado != null -> "Reintentar guardado"
+                    !estado.respuestaComprobada -> "Comprobar respuesta"
+                    estado.indiceActual == estado.preguntas.lastIndex ->
+                        "Ver mi resultado"
+
+                    else -> "Siguiente pregunta"
+                },
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResultadoLectura(
+    estado: LecturaUiState,
+    onRepetir: () -> Unit,
+    onVolver: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Star,
+            contentDescription = null,
+            tint = Color(0xFFB97412),
+            modifier = Modifier.size(80.dp)
+        )
+
+        Text(
+            text = "¡Terminaste tu lectura!",
+            fontSize = 28.sp,
+            lineHeight = 34.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center
+        )
+
+        Text(
+            text = "Cada práctica te ayuda a aprender.",
+            color = LecturaSecundario,
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Surface(
+            modifier = Modifier
+                .widthIn(max = 600.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = Color(0xFFE0EFE7),
+            contentColor = LecturaTexto
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "${estado.aciertos} de ${estado.preguntas.size}",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = LecturaVerde
+                )
+
+                Text(
+                    text = "Respuestas correctas",
+                    fontSize = 18.sp
+                )
+
+                Text(
+                    text = "Tu resultado quedó guardado.",
+                    fontSize = 15.sp
+                )
+            }
+        }
+
+        Button(
+            onClick = onRepetir,
+            modifier = Modifier
+                .widthIn(max = 600.dp)
+                .fillMaxWidth()
+                .heightIn(min = 56.dp),
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = LecturaAzul,
+                contentColor = Color.White
+            )
+        ) {
+            Text(
+                text = "Practicar otra vez",
+                fontSize = 18.sp
+            )
+        }
+
+        TextButton(
+            onClick = onVolver
+        ) {
+            Text(
+                text = "Volver a las actividades",
+                color = LecturaAzul,
+                fontSize = 17.sp
+            )
         }
     }
 }
