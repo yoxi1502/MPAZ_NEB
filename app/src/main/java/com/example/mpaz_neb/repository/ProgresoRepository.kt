@@ -5,12 +5,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.mpaz_neb.model.ModuloActividad
+import java.util.UUID
 import com.example.mpaz_neb.model.ProgresoUiState
 import com.example.mpaz_neb.model.ResultadoActividad
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import com.example.mpaz_neb.repository.SesionAulaRepository
 
-private val Context.progresoDataStore by preferencesDataStore(
+internal val Context.progresoDataStore by preferencesDataStore(
     name = "progreso_actividades"
 )
 
@@ -74,23 +77,43 @@ class ProgresoRepository(context: Context) {
             )
         }
 
-    suspend fun guardarLectura(aciertos: Int, total: Int) {
+    suspend fun guardarLectura(
+        aciertos: Int,
+        total: Int,
+        sesionId: String? = null,
+        intentoId: String = UUID.randomUUID().toString()
+    ) {
         require(total > 0 && aciertos in 0..total)
 
         appContext.progresoDataStore.edit { preferencias ->
             preferencias[LECTURA_ACIERTOS] = aciertos
             preferencias[LECTURA_TOTAL] = total
-            preferencias[LECTURA_FECHA] = System.currentTimeMillis()
+            val fecha = System.currentTimeMillis()
+            preferencias[LECTURA_FECHA] = fecha
+            SesionAulaRepository.registrarResultadoEn(
+                preferencias, sesionId, intentoId, ModuloActividad.LECTURA,
+                aciertos, total, fecha
+            )
         }
     }
 
-    suspend fun guardarMatematica(aciertos: Int, total: Int) {
+    suspend fun guardarMatematica(
+        aciertos: Int,
+        total: Int,
+        sesionId: String? = null,
+        intentoId: String = UUID.randomUUID().toString()
+    ) {
         require(total > 0 && aciertos in 0..total)
 
         appContext.progresoDataStore.edit { preferencias ->
             preferencias[MATEMATICA_ACIERTOS] = aciertos
             preferencias[MATEMATICA_TOTAL] = total
-            preferencias[MATEMATICA_FECHA] = System.currentTimeMillis()
+            val fecha = System.currentTimeMillis()
+            preferencias[MATEMATICA_FECHA] = fecha
+            SesionAulaRepository.registrarResultadoEn(
+                preferencias, sesionId, intentoId, ModuloActividad.MATEMATICA,
+                aciertos, total, fecha
+            )
         }
     }
 }

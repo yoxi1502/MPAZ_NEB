@@ -1,13 +1,23 @@
 package com.example.mpaz_neb.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.SesionAula
 import com.example.mpaz_neb.model.StudentCodeUiState
+import com.example.mpaz_neb.repository.SesionAulaRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class StudentCodeViewModel : ViewModel() {
+class StudentCodeViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val repository = SesionAulaRepository(application)
 
     private val _uiState = MutableStateFlow(
         StudentCodeUiState()
@@ -25,30 +35,40 @@ class StudentCodeViewModel : ViewModel() {
         }
     }
 
-    fun validarCodigo(): Boolean {
-        val codigo = _uiState.value.codigo
-            .trim()
-            .uppercase()
+    fun validarCodigo(
+        moduloRequerido: ModuloActividad? = null,
+        onExito: (SesionAula?) -> Unit
+    ) {
+        val codigo = _uiState.value.codigo.trim().uppercase()
 
-        val error = when {
-            codigo.isBlank() -> {
-                "Escribe el código que te entregó tu profesora."
+        if (codigo.isBlank()) {
+            _uiState.update {
+                it.copy(errorCodigo = "Escribe el código que te entregó tu profesora.")
             }
-
-            codigo != "MPAZ-402" -> {
-                "El código no es correcto. Revísalo e intenta nuevamente."
-            }
-
-            else -> null
+            return
         }
 
-        _uiState.update { estado ->
-            estado.copy(
-                codigo = codigo,
-                errorCodigo = error
-            )
+        if (codigo == "MPAZ-402") {
+            _uiState.update { it.copy(errorCodigo = null) }
+            onExito(null)
+            return
         }
 
-        return error == null
+        _uiState.update { it.copy(validando = true, errorCodigo = null) }
+
+        viewModelScope.launch {
+            try {
+                val sesion = repository.ingresarConCodigo(codigo, moduloRequerido)
+                _uiState.update { it.copy(validando = false) }
+                onExito(sesion)
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        validando = false,
+                        errorCodigo = e.message ?: "El código no es correcto. Revísalo e intenta nuevamente."
+                    )
+                }
+            }
+        }
     }
 }
