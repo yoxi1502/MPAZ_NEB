@@ -49,7 +49,7 @@ class MatematicaViewModel(
             if (
                 estado.finalizada ||
                 estado.guardando ||
-                estado.respuestaSeleccionada != null
+                estado.respuestaComprobada
             ) {
                 return@update estado
             }
@@ -62,13 +62,33 @@ class MatematicaViewModel(
                 return@update estado
             }
 
+            estado.copy(
+                respuestaSeleccionada = respuesta
+            )
+        }
+    }
+
+    fun comprobarRespuesta() {
+        _uiState.update { estado ->
+            if (
+                estado.finalizada ||
+                estado.guardando ||
+                estado.respuestaComprobada ||
+                estado.respuestaSeleccionada == null
+            ) {
+                return@update estado
+            }
+
+            val pregunta = estado.preguntas
+                .getOrNull(estado.indiceActual)
+                ?: return@update estado
+
             val esCorrecta =
-                respuesta == pregunta.respuestaCorrecta
+                estado.respuestaSeleccionada == pregunta.respuestaCorrecta
 
             estado.copy(
-                respuestaSeleccionada = respuesta,
-                aciertos = estado.aciertos +
-                        if (esCorrecta) 1 else 0
+                respuestaComprobada = true,
+                aciertos = estado.aciertos + if (esCorrecta) 1 else 0
             )
         }
     }
@@ -79,6 +99,7 @@ class MatematicaViewModel(
         if (
             estado.finalizada ||
             estado.guardando ||
+            !estado.respuestaComprobada ||
             estado.respuestaSeleccionada == null
         ) {
             return
@@ -89,6 +110,7 @@ class MatematicaViewModel(
                 actual.copy(
                     indiceActual = actual.indiceActual + 1,
                     respuestaSeleccionada = null,
+                    respuestaComprobada = false,
                     errorGuardado = null
                 )
             }
