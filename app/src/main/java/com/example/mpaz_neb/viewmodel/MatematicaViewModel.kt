@@ -3,13 +3,19 @@ package com.example.mpaz_neb.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.MatematicaUiState
+import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.PreguntaMatematica
 import com.example.mpaz_neb.repository.ProgresoRepository
+import com.example.mpaz_neb.repository.SesionAulaRepository
+import java.util.UUID
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -18,6 +24,25 @@ class MatematicaViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = ProgresoRepository(application)
+
+    private val sesionRepository =
+        SesionAulaRepository(application)
+
+    private var intentoId = UUID.randomUUID().toString()
+
+    private var contextoSesion = cargarSesionMatematica()
+
+    private fun cargarSesionMatematica() = viewModelScope.async {
+        val sesion = sesionRepository.sesionActual.first()
+
+        sesion?.takeIf {
+            it.modulo == ModuloActividad.MATEMATICA &&
+                    (
+                            it.estado == EstadoSesion.EN_CURSO ||
+                                    it.estado == EstadoSesion.COMPLETADA
+                            )
+        }?.id
+    }
 
     private val preguntas = listOf(
         PreguntaMatematica(
@@ -84,11 +109,13 @@ class MatematicaViewModel(
                 ?: return@update estado
 
             val esCorrecta =
-                estado.respuestaSeleccionada == pregunta.respuestaCorrecta
+                estado.respuestaSeleccionada ==
+                        pregunta.respuestaCorrecta
 
             estado.copy(
                 respuestaComprobada = true,
-                aciertos = estado.aciertos + if (esCorrecta) 1 else 0
+                aciertos = estado.aciertos +
+                        if (esCorrecta) 1 else 0
             )
         }
     }
@@ -124,11 +151,16 @@ class MatematicaViewModel(
             )
         }
 
+        val contextoDelIntento = contextoSesion
+        val idDelIntento = intentoId
+
         viewModelScope.launch {
             try {
                 repository.guardarMatematica(
                     aciertos = estado.aciertos,
-                    total = estado.preguntas.size
+                    total = estado.preguntas.size,
+                    sesionId = contextoDelIntento.await(),
+                    intentoId = idDelIntento
                 )
 
                 _uiState.update { actual ->
@@ -155,6 +187,9 @@ class MatematicaViewModel(
         if (_uiState.value.guardando) {
             return
         }
+
+        intentoId = UUID.randomUUID().toString()
+        contextoSesion = cargarSesionMatematica()
 
         _uiState.value = MatematicaUiState(
             preguntas = preguntas
