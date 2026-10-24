@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.ui.theme.components
+package com.example.mpaz_neb.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

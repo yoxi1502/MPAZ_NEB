@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.screens
+package com.example.mpaz_neb.ui.screens
 
 import android.Manifest
 import android.content.ContentValues

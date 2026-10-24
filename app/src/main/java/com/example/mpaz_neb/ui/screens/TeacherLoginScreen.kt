@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.ui.theme.screens
+package com.example.mpaz_neb.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,13 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
 import com.example.mpaz_neb.navigation.Screen
-import com.example.mpaz_neb.viewmodel.MainViewModel
 import com.example.mpaz_neb.viewmodel.TeacherLoginViewModel
 
 @Composable
 fun TeacherLoginScreen(
     navController: NavController,
-    viewModel: MainViewModel,
     teacherLoginViewModel: TeacherLoginViewModel = obtenerViewModel()
 ) {
     val estado by teacherLoginViewModel.uiState.collectAsState()

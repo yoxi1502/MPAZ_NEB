@@ -48,7 +48,7 @@ class StudentCodeViewModel(
             return
         }
 
-        if (codigo == "MPAZ-402") {
+        if (codigo == CODIGO_DEMO) {
             _uiState.update { it.copy(errorCodigo = null) }
             onExito(null)
             return
@@ -70,5 +70,10 @@ class StudentCodeViewModel(
                 }
             }
         }
+    }
+
+    companion object {
+        /** Código de demostración (dato ficticio) para probar la app sin generar una sesión. */
+        const val CODIGO_DEMO = "MPAZ-402"
     }
 }

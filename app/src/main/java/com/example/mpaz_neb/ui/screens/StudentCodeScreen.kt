@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.ui.theme.screens
+package com.example.mpaz_neb.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -35,7 +35,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
 import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.navigation.Screen
-import com.example.mpaz_neb.viewmodel.MainViewModel
 import com.example.mpaz_neb.viewmodel.StudentCodeViewModel
 
 private val CodigoTexto = Color(0xFF24374B)
@@ -54,7 +53,6 @@ private data class OpcionActividadCodigo(
 @Composable
 fun StudentCodeScreen(
     navController: NavController,
-    viewModel: MainViewModel,
     studentCodeViewModel: StudentCodeViewModel = obtenerViewModel()
 ) {
     val estado by studentCodeViewModel.uiState.collectAsState()

@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.ui.theme.screens
+package com.example.mpaz_neb.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -33,7 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavHostController
 import com.example.mpaz_neb.model.MatematicaUiState
 import com.example.mpaz_neb.navigation.NavigationEvent
-import com.example.mpaz_neb.viewmodel.MainViewModel
 import com.example.mpaz_neb.viewmodel.MatematicaViewModel
 
 private val MateFondo = Color(0xFFFFFAF2)
@@ -44,7 +43,6 @@ private val MateVerde = Color(0xFF176B60)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MatematicaScreen(
-    viewModel: MainViewModel,
     navController: NavHostController,
     onNavigate: (NavigationEvent) -> Unit,
     matematicaViewModel: MatematicaViewModel = obtenerViewModel()

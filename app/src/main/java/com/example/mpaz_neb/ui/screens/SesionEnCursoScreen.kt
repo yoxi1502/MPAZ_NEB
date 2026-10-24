@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.ui.theme.screens
+package com.example.mpaz_neb.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*

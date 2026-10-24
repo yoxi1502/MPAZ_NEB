@@ -11,7 +11,6 @@ import com.example.mpaz_neb.model.ProgresoUiState
 import com.example.mpaz_neb.model.ResultadoActividad
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import com.example.mpaz_neb.repository.SesionAulaRepository
 
 internal val Context.progresoDataStore by preferencesDataStore(
     name = "progreso_actividades"

@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.screens
+package com.example.mpaz_neb.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -33,7 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
 import com.example.mpaz_neb.model.LecturaUiState
 import com.example.mpaz_neb.viewmodel.LecturaViewModel
-import com.example.mpaz_neb.viewmodel.MainViewModel
 
 private val LecturaFondo = Color(0xFFFFFAF2)
 private val LecturaAzul = Color(0xFF2456A6)
@@ -45,7 +44,6 @@ private val LecturaVerde = Color(0xFF176B60)
 @Composable
 fun LecturaScreen(
     navController: NavController,
-    viewModel: MainViewModel,
     lecturaViewModel: LecturaViewModel = obtenerViewModel()
 ) {
     val estado by lecturaViewModel.uiState.collectAsState()

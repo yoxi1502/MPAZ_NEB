@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.ui.theme.utils
+package com.example.mpaz_neb.ui.utils
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi

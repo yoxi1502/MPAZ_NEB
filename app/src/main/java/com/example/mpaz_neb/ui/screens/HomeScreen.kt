@@ -1,4 +1,4 @@
-package com.example.mpaz_neb.screens
+package com.example.mpaz_neb.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mpaz_neb.navigation.Screen
-import com.example.mpaz_neb.viewmodel.MainViewModel
 
 private val InicioAzul = Color(0xFF2456A6)
 private val InicioVerde = Color(0xFF176B60)
@@ -35,8 +34,7 @@ private val InicioTextoSecundario = Color(0xFF526273)
 
 @Composable
 fun HomeScreen(
-    navController: NavController,
-    viewModel: MainViewModel
+    navController: NavController
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
