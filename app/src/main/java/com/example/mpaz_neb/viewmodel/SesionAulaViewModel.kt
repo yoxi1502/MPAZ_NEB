@@ -61,14 +61,34 @@ class SesionAulaViewModel(
     }
 
     fun seleccionarCurso(curso: String) {
-        _uiState.update { it.copy(curso = curso) }
+        _uiState.update { it.copy(curso = curso, errorCurso = null) }
     }
 
     fun seleccionarEstudiante(estudiante: String) {
-        _uiState.update { it.copy(estudiante = estudiante) }
+        _uiState.update { it.copy(estudiante = estudiante, errorEstudiante = null) }
+    }
+
+    /**
+     * Valida la selección del formulario de asignación.
+     * La lógica vive en el ViewModel; la interfaz solo muestra los errores del estado.
+     */
+    fun validarSeleccion(): Boolean {
+        val estado = _uiState.value
+        val errorCurso = if (estado.curso !in SesionAulaRepository.CURSOS) {
+            "Selecciona un nivel o curso."
+        } else null
+        val errorEstudiante = if (estado.estudiante !in SesionAulaRepository.ESTUDIANTES) {
+            "Selecciona un estudiante."
+        } else null
+
+        _uiState.update {
+            it.copy(errorCurso = errorCurso, errorEstudiante = errorEstudiante)
+        }
+        return errorCurso == null && errorEstudiante == null
     }
 
     fun generarCodigo(onExito: () -> Unit) {
+        if (!validarSeleccion()) return
         val estadoActual = _uiState.value
         _uiState.update { it.copy(guardando = true, error = null) }
         viewModelScope.launch {
