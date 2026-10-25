@@ -64,4 +64,50 @@ object Validadores {
             else -> null
         }
     }
+
+    // ---- Formulario de actividad (perfil docente / UTP) ----
+
+    const val NOMBRE_MAX = 60
+    const val TEXTO_LARGO_MAX = 300
+    const val PREGUNTAS_MAX = 10
+    const val INTENTOS_MAX = 5
+
+    fun validarNombreActividad(nombre: String): String? {
+        val limpio = nombre.trim()
+        return when {
+            limpio.isBlank() -> "Escribe el nombre de la actividad."
+            limpio.length < 4 -> "El nombre debe tener al menos 4 caracteres."
+            limpio.length > NOMBRE_MAX -> "Máximo $NOMBRE_MAX caracteres."
+            else -> null
+        }
+    }
+
+    fun validarContenido(contenido: String): String? {
+        val limpio = contenido.trim()
+        return when {
+            limpio.isBlank() -> "Indica el contenido que se trabaja."
+            limpio.length > NOMBRE_MAX -> "Máximo $NOMBRE_MAX caracteres."
+            else -> null
+        }
+    }
+
+    fun validarTextoPedagogico(texto: String, campo: String): String? {
+        val limpio = texto.trim()
+        return when {
+            limpio.isBlank() -> "Escribe $campo."
+            limpio.length < 10 -> "Describe $campo con al menos 10 caracteres."
+            limpio.length > TEXTO_LARGO_MAX -> "Máximo $TEXTO_LARGO_MAX caracteres."
+            else -> null
+        }
+    }
+
+    fun validarEnteroEnRango(valor: String, minimo: Int, maximo: Int): String? {
+        val numero = valor.trim().toIntOrNull()
+        return when {
+            valor.isBlank() -> "Ingresa un número."
+            numero == null -> "Solo se permiten números."
+            numero !in minimo..maximo -> "Debe estar entre $minimo y $maximo."
+            else -> null
+        }
+    }
 }

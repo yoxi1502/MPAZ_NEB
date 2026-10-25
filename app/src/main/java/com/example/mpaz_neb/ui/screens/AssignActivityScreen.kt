@@ -17,6 +17,8 @@ import androidx.navigation.NavHostController
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.UsuarioSesion
+import com.example.mpaz_neb.model.PerfilUsuario
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
 import java.text.DateFormat
@@ -74,6 +76,22 @@ fun AssignActivityScreen(
             }
 
             EncabezadoUsuario(usuario)
+
+            if (usuario.perfil == PerfilUsuario.DOCENTE_UTP) {
+                FilledTonalButton(
+                    onClick = {
+                        navController.navigate(Screen.Catalogo.route) { launchSingleTop = true }
+                    },
+                    enabled = !estado.guardando,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Catálogo de actividades")
+                }
+            }
 
             Text(
                 text = "Asignar actividad",
@@ -141,13 +159,38 @@ fun AssignActivityScreen(
                 onSeleccion = sesionViewModel::seleccionarCurso
             )
 
-            OutlinedTextField(
-                value = estado.modulo.contenido,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Contenido disponible") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            val opciones = estado.opcionesActividad
+            val seleccionada = estado.actividadSeleccionada
+            if (seleccionada != null) {
+                SelectorAsignacion(
+                    titulo = "Actividad del catálogo",
+                    valor = seleccionada.descripcionCorta,
+                    opciones = opciones.map { it.descripcionCorta },
+                    habilitado = habilitado,
+                    onSeleccion = { texto ->
+                        opciones.firstOrNull { it.descripcionCorta == texto }
+                            ?.let(sesionViewModel::seleccionarActividad)
+                    }
+                )
+                Text(
+                    text = "Objetivo: ${seleccionada.objetivo}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else if (estado.curso.isBlank()) {
+                Text(
+                    text = "Elige un curso para ver las actividades disponibles.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                Text(
+                    text = "No hay actividades disponibles para ${estado.modulo.etiqueta} " +
+                            "en ${estado.curso}. Elige otro curso o pide a UTP que publique una.",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             SelectorAsignacion(
                 titulo = "Estudiante asignado",

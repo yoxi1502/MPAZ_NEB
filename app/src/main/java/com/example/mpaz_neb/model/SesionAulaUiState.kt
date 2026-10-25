@@ -15,5 +15,18 @@ data class SesionAulaUiState(
     val observacionEditada: Boolean = false,
     val errorObservacion: String? = null,
     val guardandoObservacion: Boolean = false,
-    val observacionGuardada: Boolean = false
-)
+    val observacionGuardada: Boolean = false,
+    // Actividades del catálogo para asignar
+    val actividades: List<Actividad> = emptyList(),
+    val actividadId: String? = null
+) {
+    /** Solo actividades Disponibles del módulo y curso elegidos. */
+    val opcionesActividad: List<Actividad>
+        get() = actividades.filter {
+            it.estado == EstadoActividad.DISPONIBLE && it.modulo == modulo && it.curso == curso
+        }
+
+    val actividadSeleccionada: Actividad?
+        get() = opcionesActividad.firstOrNull { it.id == actividadId }
+            ?: opcionesActividad.firstOrNull()
+}

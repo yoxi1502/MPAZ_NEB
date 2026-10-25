@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.SesionAulaUiState
 import com.example.mpaz_neb.repository.SesionAulaRepository
+import com.example.mpaz_neb.repository.ActividadRepository
+import com.example.mpaz_neb.model.Actividad
 import com.example.mpaz_neb.validacion.Validadores
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -20,6 +22,7 @@ class SesionAulaViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = SesionAulaRepository(application)
+    private val actividadRepository = ActividadRepository(application)
 
     private val _uiState = MutableStateFlow(SesionAulaUiState())
     val uiState: StateFlow<SesionAulaUiState> = _uiState.asStateFlow()
@@ -28,6 +31,11 @@ class SesionAulaViewModel(
 
     init {
         cargarSesion()
+        viewModelScope.launch {
+            actividadRepository.actividades.collect { lista ->
+                _uiState.update { it.copy(actividades = lista) }
+            }
+        }
     }
 
     fun cargarSesion() {
@@ -69,6 +77,10 @@ class SesionAulaViewModel(
 
     fun seleccionarCurso(curso: String) {
         _uiState.update { it.copy(curso = curso, errorCurso = null) }
+    }
+
+    fun seleccionarActividad(actividad: Actividad) {
+        _uiState.update { it.copy(actividadId = actividad.id) }
     }
 
     fun seleccionarEstudiante(estudiante: String) {
@@ -146,6 +158,8 @@ class SesionAulaViewModel(
         if (!validarSeleccion()) return
         val estadoActual = _uiState.value
         if (estadoActual.guardando) return
+        // Si no hay actividad Disponible, la pantalla ya muestra el aviso junto al selector
+        val actividad = estadoActual.actividadSeleccionada ?: return
         _uiState.update { it.copy(guardando = true, error = null) }
         viewModelScope.launch {
             try {
@@ -153,7 +167,8 @@ class SesionAulaViewModel(
                     modulo = estadoActual.modulo,
                     curso = estadoActual.curso,
                     estudiante = estadoActual.estudiante,
-                    asistente = asistente
+                    asistente = asistente,
+                    contenido = actividad.descripcionCorta
                 )
                 _uiState.update { it.copy(guardando = false) }
                 onExito()

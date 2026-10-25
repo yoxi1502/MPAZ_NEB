@@ -261,7 +261,7 @@ fun MatematicaScreen(
                 }) { Text("Sí, enviar") }
             },
             dismissButton = {
-                TextButton(onClick = { confirmarEnvio = false }) { Text("Revisar") }
+                TextButton(onClick = { confirmarEnvio = false }) { Text("Todavía no") }
             }
         )
     }
