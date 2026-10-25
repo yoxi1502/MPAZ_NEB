@@ -1,5 +1,6 @@
 package com.example.mpaz_neb.ui.screens
 
+import com.example.mpaz_neb.ui.theme.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -34,11 +35,6 @@ import androidx.navigation.NavController
 import com.example.mpaz_neb.model.LecturaUiState
 import com.example.mpaz_neb.viewmodel.LecturaViewModel
 
-private val LecturaFondo = Color(0xFFFFFAF2)
-private val LecturaAzul = Color(0xFF2456A6)
-private val LecturaTexto = Color(0xFF24374B)
-private val LecturaSecundario = Color(0xFF526273)
-private val LecturaVerde = Color(0xFF176B60)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,8 +67,8 @@ fun LecturaScreen(
     }
 
     Scaffold(
-        containerColor = LecturaFondo,
-        contentColor = LecturaTexto,
+        containerColor = FondoCalido,
+        contentColor = TextoPrincipal,
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
@@ -83,9 +79,9 @@ fun LecturaScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = LecturaFondo,
-                    titleContentColor = LecturaTexto,
-                    navigationIconContentColor = LecturaAzul
+                    containerColor = FondoCalido,
+                    titleContentColor = TextoPrincipal,
+                    navigationIconContentColor = AzulPrimario
                 ),
                 navigationIcon = {
                     IconButton(
@@ -170,8 +166,8 @@ fun LecturaScreen(
                                 .fillMaxWidth()
                                 .height(10.dp)
                                 .clip(RoundedCornerShape(50)),
-                            color = LecturaAzul,
-                            trackColor = Color(0xFFE1E8F0)
+                            color = AzulPrimario,
+                            trackColor = PistaProgreso
                         )
 
                         if (pantallaAncha) {
@@ -219,12 +215,12 @@ private fun InicioActividadLectura(
     ) {
         Surface(
             shape = CircleShape,
-            color = Color(0xFFE0EFE7)
+            color = VerdeClaro
         ) {
             Icon(
                 imageVector = Icons.Default.AutoStories,
                 contentDescription = null,
-                tint = LecturaVerde,
+                tint = VerdeLogro,
                 modifier = Modifier
                     .padding(28.dp)
                     .size(72.dp)
@@ -239,7 +235,7 @@ private fun InicioActividadLectura(
 
         Text(
             text = "Una historia, tres preguntas y mucho por descubrir.",
-            color = LecturaSecundario,
+            color = TextoSecundario,
             fontSize = 17.sp,
             textAlign = TextAlign.Center
         )
@@ -250,10 +246,10 @@ private fun InicioActividadLectura(
                 .fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
             color = Color.White,
-            contentColor = LecturaTexto,
+            contentColor = TextoPrincipal,
             border = BorderStroke(
                 width = 1.dp,
-                color = Color(0xFFDCE4E9)
+                color = BordeSuave
             )
         ) {
             Column(
@@ -262,7 +258,7 @@ private fun InicioActividadLectura(
             ) {
                 Text(
                     text = "LECTURA · NIVEL 1",
-                    color = LecturaAzul,
+                    color = AzulPrimario,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -288,7 +284,7 @@ private fun InicioActividadLectura(
                         .heightIn(min = 58.dp),
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = LecturaAzul,
+                        containerColor = AzulPrimario,
                         contentColor = Color.White
                     )
                 ) {
@@ -312,10 +308,10 @@ private fun TextoLectura(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         color = Color.White,
-        contentColor = LecturaTexto,
+        contentColor = TextoPrincipal,
         border = BorderStroke(
             width = 1.dp,
-            color = Color(0xFFDCE4E9)
+            color = BordeSuave
         )
     ) {
         Column(
@@ -329,12 +325,12 @@ private fun TextoLectura(
                 Icon(
                     imageVector = Icons.Default.AutoStories,
                     contentDescription = null,
-                    tint = LecturaVerde
+                    tint = VerdeLogro
                 )
 
                 Text(
                     text = "Mi historia",
-                    color = LecturaVerde,
+                    color = VerdeLogro,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -371,7 +367,7 @@ private fun PreguntaLecturaPanel(
     ) {
         Text(
             text = "Piensa y elige",
-            color = LecturaAzul,
+            color = AzulPrimario,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold
         )
@@ -401,9 +397,9 @@ private fun PreguntaLecturaPanel(
                             !correcta
 
                 val color = when {
-                    correcta -> Color(0xFFE0EFE7)
-                    incorrecta -> Color(0xFFF9E4E2)
-                    seleccionada -> Color(0xFFE5EEF9)
+                    correcta -> VerdeClaro
+                    incorrecta -> RojoClaro
+                    seleccionada -> AzulClaro
                     else -> Color.White
                 }
 
@@ -413,10 +409,10 @@ private fun PreguntaLecturaPanel(
                 )
 
                 val borde = when {
-                    correcta -> LecturaVerde
-                    incorrecta -> Color(0xFF963C46)
-                    seleccionada -> LecturaAzul
-                    else -> Color(0xFFDCE4E9)
+                    correcta -> VerdeLogro
+                    incorrecta -> RojoSuave
+                    seleccionada -> AzulPrimario
+                    else -> BordeSuave
                 }
 
                 Surface(
@@ -433,7 +429,7 @@ private fun PreguntaLecturaPanel(
                         ),
                     shape = RoundedCornerShape(18.dp),
                     color = fondo,
-                    contentColor = LecturaTexto,
+                    contentColor = TextoPrincipal,
                     border = BorderStroke(
                         width = if (seleccionada || correcta) {
                             2.dp
@@ -479,7 +475,7 @@ private fun PreguntaLecturaPanel(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Respuesta correcta",
-                                tint = LecturaVerde
+                                tint = VerdeLogro
                             )
                         }
                     }
@@ -495,11 +491,11 @@ private fun PreguntaLecturaPanel(
 
             Surface(
                 color = if (correcta) {
-                    Color(0xFFE0EFE7)
+                    VerdeClaro
                 } else {
-                    Color(0xFFFFE8CB)
+                    NaranjaClaro
                 },
-                contentColor = LecturaTexto,
+                contentColor = TextoPrincipal,
                 shape = RoundedCornerShape(18.dp)
             ) {
                 Text(
@@ -521,7 +517,7 @@ private fun PreguntaLecturaPanel(
         estado.errorGuardado?.let { mensaje ->
             Text(
                 text = mensaje,
-                color = Color(0xFF963C46),
+                color = RojoSuave,
                 fontSize = 16.sp
             )
         }
@@ -547,7 +543,7 @@ private fun PreguntaLecturaPanel(
                 .heightIn(min = 60.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = LecturaAzul,
+                containerColor = AzulPrimario,
                 contentColor = Color.White
             )
         ) {
@@ -582,7 +578,7 @@ private fun ResultadoLectura(
         Icon(
             imageVector = Icons.Default.Star,
             contentDescription = null,
-            tint = Color(0xFFB97412),
+            tint = Dorado,
             modifier = Modifier.size(80.dp)
         )
 
@@ -596,7 +592,7 @@ private fun ResultadoLectura(
 
         Text(
             text = "Cada práctica te ayuda a aprender.",
-            color = LecturaSecundario,
+            color = TextoSecundario,
             fontSize = 18.sp,
             textAlign = TextAlign.Center
         )
@@ -606,8 +602,8 @@ private fun ResultadoLectura(
                 .widthIn(max = 600.dp)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFFE0EFE7),
-            contentColor = LecturaTexto
+            color = VerdeClaro,
+            contentColor = TextoPrincipal
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
@@ -618,7 +614,7 @@ private fun ResultadoLectura(
                     text = "${estado.aciertos} de ${estado.preguntas.size}",
                     fontSize = 36.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = LecturaVerde
+                    color = VerdeLogro
                 )
 
                 Text(
@@ -641,7 +637,7 @@ private fun ResultadoLectura(
                 .heightIn(min = 56.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = LecturaAzul,
+                containerColor = AzulPrimario,
                 contentColor = Color.White
             )
         ) {
@@ -656,7 +652,7 @@ private fun ResultadoLectura(
         ) {
             Text(
                 text = "Volver a las actividades",
-                color = LecturaAzul,
+                color = AzulPrimario,
                 fontSize = 17.sp
             )
         }

@@ -1,5 +1,6 @@
 package com.example.mpaz_neb.ui.screens
 
+import com.example.mpaz_neb.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -27,10 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mpaz_neb.navigation.Screen
 
-private val InicioAzul = Color(0xFF2456A6)
-private val InicioVerde = Color(0xFF176B60)
-private val InicioTexto = Color(0xFF24374B)
-private val InicioTextoSecundario = Color(0xFF526273)
 
 @Composable
 fun HomeScreen(
@@ -38,7 +35,7 @@ fun HomeScreen(
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFFFFAF2)
+        color = FondoCalido
     ) {
         BoxWithConstraints(
             modifier = Modifier
@@ -66,12 +63,12 @@ fun HomeScreen(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFFE3EFE9)
+                        color = VerdeClaro
                     ) {
                         Icon(
                             imageVector = Icons.Default.School,
                             contentDescription = null,
-                            tint = InicioVerde,
+                            tint = VerdeLogro,
                             modifier = Modifier.padding(12.dp).size(26.dp)
                         )
                     }
@@ -81,13 +78,13 @@ fun HomeScreen(
                             text = "Escuela Marcela Paz",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = InicioTexto
+                            color = TextoPrincipal
                         )
 
                         Text(
                             text = "Aprendemos a nuestro ritmo",
                             fontSize = 13.sp,
-                            color = InicioTextoSecundario
+                            color = TextoSecundario
                         )
                     }
                 }
@@ -118,7 +115,7 @@ fun HomeScreen(
                 Text(
                     text = "Lectura y Matemática • San Bernardo",
                     fontSize = 12.sp,
-                    color = InicioTextoSecundario,
+                    color = TextoSecundario,
                     textAlign = TextAlign.Center
                 )
             }
@@ -142,7 +139,7 @@ private fun BienvenidaInicio(
             fontSize = 30.sp,
             lineHeight = 36.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = InicioTexto,
+            color = TextoPrincipal,
             textAlign = TextAlign.Center
         )
 
@@ -150,7 +147,7 @@ private fun BienvenidaInicio(
             text = "Lee, descubre y practica.\nCada pequeño paso es un gran logro.",
             fontSize = 16.sp,
             lineHeight = 24.sp,
-            color = InicioTextoSecundario,
+            color = TextoSecundario,
             textAlign = TextAlign.Center
         )
 
@@ -159,14 +156,14 @@ private fun BienvenidaInicio(
         ) {
             EtiquetaInicio(
                 texto = "ABC · Lectura",
-                fondo = Color(0xFFE5EEF9),
-                colorTexto = InicioAzul
+                fondo = AzulClaro,
+                colorTexto = AzulPrimario
             )
 
             EtiquetaInicio(
                 texto = "123 · Matemática",
-                fondo = Color(0xFFFFE8CB),
-                colorTexto = Color(0xFF85460D)
+                fondo = NaranjaClaro,
+                colorTexto = NaranjaMatematica
             )
         }
     }
@@ -184,7 +181,7 @@ private fun IlustracionInicio() {
             modifier = Modifier
                 .size(150.dp)
                 .background(
-                    color = Color(0xFFDCEFE7),
+                    color = VerdeClaro,
                     shape = CircleShape
                 )
         )
@@ -192,7 +189,7 @@ private fun IlustracionInicio() {
         Icon(
             imageVector = Icons.Default.AutoStories,
             contentDescription = null,
-            tint = InicioVerde,
+            tint = VerdeLogro,
             modifier = Modifier.size(100.dp)
         )
 
@@ -201,7 +198,7 @@ private fun IlustracionInicio() {
                 .align(Alignment.TopStart)
                 .padding(start = 18.dp, top = 10.dp),
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFFE5EEF9)
+            color = AzulClaro
         ) {
             Text(
                 text = "ABC",
@@ -209,7 +206,7 @@ private fun IlustracionInicio() {
                     horizontal = 14.dp,
                     vertical = 10.dp
                 ),
-                color = InicioAzul,
+                color = AzulPrimario,
                 fontSize = 23.sp,
                 fontWeight = FontWeight.ExtraBold
             )
@@ -220,7 +217,7 @@ private fun IlustracionInicio() {
                 .align(Alignment.BottomEnd)
                 .padding(end = 14.dp, bottom = 8.dp),
             shape = RoundedCornerShape(16.dp),
-            color = Color(0xFFFFE8CB)
+            color = NaranjaClaro
         ) {
             Text(
                 text = "123",
@@ -228,7 +225,7 @@ private fun IlustracionInicio() {
                     horizontal = 14.dp,
                     vertical = 10.dp
                 ),
-                color = Color(0xFF85460D),
+                color = NaranjaMatematica,
                 fontSize = 23.sp,
                 fontWeight = FontWeight.ExtraBold
             )
@@ -237,7 +234,7 @@ private fun IlustracionInicio() {
         Icon(
             imageVector = Icons.Default.Star,
             contentDescription = null,
-            tint = Color(0xFFE8A32E),
+            tint = Estrella,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(end = 24.dp, top = 14.dp)
@@ -247,7 +244,7 @@ private fun IlustracionInicio() {
         Icon(
             imageVector = Icons.Default.Star,
             contentDescription = null,
-            tint = Color(0xFFE8A32E),
+            tint = Estrella,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = 32.dp, bottom = 12.dp)
@@ -295,21 +292,21 @@ private fun PerfilesInicio(
             text = "¿Quién va a comenzar?",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = InicioTexto,
+            color = TextoPrincipal,
             textAlign = TextAlign.Center
         )
 
         Text(
             text = "Elige tu perfil",
             fontSize = 14.sp,
-            color = InicioTextoSecundario
+            color = TextoSecundario
         )
 
         BotonPerfilInicio(
             titulo = "Soy estudiante",
             descripcion = "¡Vamos a aprender!",
             icono = Icons.Default.Face,
-            fondo = InicioAzul,
+            fondo = AzulPrimario,
             colorTexto = Color.White,
             fondoIcono = Color.White.copy(alpha = 0.16f),
             onClick = {
@@ -324,8 +321,8 @@ private fun PerfilesInicio(
             descripcion = "Docentes y asistentes",
             icono = Icons.Default.Groups,
             fondo = Color.White,
-            colorTexto = InicioVerde,
-            fondoIcono = Color(0xFFE3EFE9),
+            colorTexto = VerdeLogro,
+            fondoIcono = VerdeClaro,
             onClick = {
                 navController.navigate(Screen.TeacherLogin.route) {
                     launchSingleTop = true
@@ -354,7 +351,7 @@ private fun BotonPerfilInicio(
         border = BorderStroke(
             width = 1.dp,
             color = if (fondo == Color.White) {
-                Color(0xFFCFDED8)
+                BordeVerde
             } else {
                 fondo
             }

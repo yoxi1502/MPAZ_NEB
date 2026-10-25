@@ -1,5 +1,6 @@
 package com.example.mpaz_neb.ui.screens
 
+import com.example.mpaz_neb.ui.theme.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -35,10 +36,6 @@ import com.example.mpaz_neb.model.MatematicaUiState
 import com.example.mpaz_neb.navigation.NavigationEvent
 import com.example.mpaz_neb.viewmodel.MatematicaViewModel
 
-private val MateFondo = Color(0xFFFFFAF2)
-private val MateMorado = Color(0xFF6B45A5)
-private val MateTexto = Color(0xFF24374B)
-private val MateVerde = Color(0xFF176B60)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,8 +69,8 @@ fun MatematicaScreen(
     }
 
     Scaffold(
-        containerColor = MateFondo,
-        contentColor = MateTexto,
+        containerColor = FondoCalido,
+        contentColor = TextoPrincipal,
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
@@ -84,9 +81,9 @@ fun MatematicaScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MateFondo,
-                    titleContentColor = MateTexto,
-                    navigationIconContentColor = MateMorado
+                    containerColor = FondoCalido,
+                    titleContentColor = TextoPrincipal,
+                    navigationIconContentColor = MoradoMatematica
                 ),
                 navigationIcon = {
                     IconButton(
@@ -115,8 +112,8 @@ fun MatematicaScreen(
                 !estado.finalizada
             ) {
                 Surface(
-                    color = MateFondo,
-                    contentColor = MateTexto
+                    color = FondoCalido,
+                    contentColor = TextoPrincipal
                 ) {
                     Column(
                         modifier = Modifier
@@ -144,7 +141,7 @@ fun MatematicaScreen(
                                 .heightIn(min = 60.dp),
                             shape = RoundedCornerShape(18.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MateMorado,
+                                containerColor = MoradoMatematica,
                                 contentColor = Color.White
                             )
                         ) {
@@ -229,12 +226,12 @@ private fun InicioMatematica(
 ) {
     Surface(
         shape = CircleShape,
-        color = Color(0xFFEEE5FA)
+        color = MoradoClaro
     ) {
         Icon(
             imageVector = Icons.Default.Calculate,
             contentDescription = null,
-            tint = MateMorado,
+            tint = MoradoMatematica,
             modifier = Modifier
                 .padding(28.dp)
                 .size(72.dp)
@@ -252,7 +249,7 @@ private fun InicioMatematica(
     Text(
         text = "Piensa, elige y descubre cuánto puedes aprender.",
         fontSize = 18.sp,
-        color = Color(0xFF526273),
+        color = TextoSecundario,
         textAlign = TextAlign.Center
     )
 
@@ -260,10 +257,10 @@ private fun InicioMatematica(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         color = Color.White,
-        contentColor = MateTexto,
+        contentColor = TextoPrincipal,
         border = BorderStroke(
             width = 1.dp,
-            color = Color(0xFFDCE4E9)
+            color = BordeSuave
         )
     ) {
         Column(
@@ -272,7 +269,7 @@ private fun InicioMatematica(
         ) {
             Text(
                 text = "MATEMÁTICA · NIVEL 1",
-                color = MateMorado,
+                color = MoradoMatematica,
                 fontWeight = FontWeight.Bold
             )
 
@@ -302,7 +299,7 @@ private fun InicioMatematica(
                     .heightIn(min = 60.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MateMorado,
+                    containerColor = MoradoMatematica,
                     contentColor = Color.White
                 )
             ) {
@@ -349,15 +346,15 @@ private fun PreguntaMatematicaPanel(
                 .fillMaxWidth()
                 .height(10.dp)
                 .clip(RoundedCornerShape(50)),
-            color = MateMorado,
-            trackColor = Color(0xFFE8E0F2)
+            color = MoradoMatematica,
+            trackColor = BordeMorado
         )
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFFEEE5FA),
-            contentColor = MateTexto
+            color = MoradoClaro,
+            contentColor = TextoPrincipal
         ) {
             Column(
                 modifier = Modifier.padding(28.dp),
@@ -367,7 +364,7 @@ private fun PreguntaMatematicaPanel(
                 Icon(
                     imageVector = Icons.Default.Calculate,
                     contentDescription = null,
-                    tint = MateMorado
+                    tint = MoradoMatematica
                 )
 
                 Text(
@@ -411,13 +408,13 @@ private fun PreguntaMatematicaPanel(
                 val fondo by animateColorAsState(
                     targetValue = when {
                         correcta ->
-                            Color(0xFFE0EFE7)
+                            VerdeClaro
 
                         incorrecta ->
-                            Color(0xFFF9E4E2)
+                            RojoClaro
 
                         seleccionada ->
-                            Color(0xFFEEE5FA)
+                            MoradoClaro
 
                         else ->
                             Color.White
@@ -427,16 +424,16 @@ private fun PreguntaMatematicaPanel(
 
                 val borde = when {
                     correcta ->
-                        MateVerde
+                        VerdeLogro
 
                     incorrecta ->
-                        Color(0xFF963C46)
+                        RojoSuave
 
                     seleccionada ->
-                        MateMorado
+                        MoradoMatematica
 
                     else ->
-                        Color(0xFFDCE4E9)
+                        BordeSuave
                 }
 
                 Surface(
@@ -453,7 +450,7 @@ private fun PreguntaMatematicaPanel(
                         ),
                     shape = RoundedCornerShape(18.dp),
                     color = fondo,
-                    contentColor = MateTexto,
+                    contentColor = TextoPrincipal,
                     border = BorderStroke(
                         width = if (seleccionada || correcta) {
                             2.dp
@@ -475,7 +472,7 @@ private fun PreguntaMatematicaPanel(
                             onClick = null,
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = borde,
-                                unselectedColor = MateMorado
+                                unselectedColor = MoradoMatematica
                             )
                         )
 
@@ -490,7 +487,7 @@ private fun PreguntaMatematicaPanel(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Respuesta correcta",
-                                tint = MateVerde
+                                tint = VerdeLogro
                             )
                         }
                     }
@@ -509,11 +506,11 @@ private fun PreguntaMatematicaPanel(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
                 color = if (correcta) {
-                    Color(0xFFE0EFE7)
+                    VerdeClaro
                 } else {
-                    Color(0xFFFFE8CB)
+                    NaranjaClaro
                 },
-                contentColor = MateTexto
+                contentColor = TextoPrincipal
             ) {
                 Text(
                     text = if (correcta) {
@@ -537,7 +534,7 @@ private fun PreguntaMatematicaPanel(
         estado.errorGuardado?.let { mensaje ->
             Text(
                 text = mensaje,
-                color = Color(0xFF963C46),
+                color = RojoSuave,
                 fontSize = 16.sp
             )
         }
@@ -553,7 +550,7 @@ private fun ResultadoMatematica(
     Icon(
         imageVector = Icons.Default.Star,
         contentDescription = null,
-        tint = Color(0xFFB97412),
+        tint = Dorado,
         modifier = Modifier.size(80.dp)
     )
 
@@ -574,8 +571,8 @@ private fun ResultadoMatematica(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = Color(0xFFE0EFE7),
-        contentColor = MateTexto
+        color = VerdeClaro,
+        contentColor = TextoPrincipal
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
@@ -586,7 +583,7 @@ private fun ResultadoMatematica(
                 text = "${estado.aciertos} de ${estado.preguntas.size}",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = MateVerde
+                color = VerdeLogro
             )
 
             Text(
@@ -608,7 +605,7 @@ private fun ResultadoMatematica(
             .heightIn(min = 58.dp),
         shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MateMorado,
+            containerColor = MoradoMatematica,
             contentColor = Color.White
         )
     ) {
@@ -623,7 +620,7 @@ private fun ResultadoMatematica(
     ) {
         Text(
             text = "Volver a las actividades",
-            color = MateMorado,
+            color = MoradoMatematica,
             fontSize = 17.sp
         )
     }

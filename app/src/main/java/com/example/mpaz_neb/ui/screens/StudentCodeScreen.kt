@@ -1,5 +1,6 @@
 package com.example.mpaz_neb.ui.screens
 
+import com.example.mpaz_neb.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -37,9 +38,6 @@ import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.viewmodel.StudentCodeViewModel
 
-private val CodigoTexto = Color(0xFF24374B)
-private val CodigoTextoSecundario = Color(0xFF526273)
-private val CodigoAzul = Color(0xFF2456A6)
 
 private data class OpcionActividadCodigo(
     val titulo: String,
@@ -68,32 +66,32 @@ fun StudentCodeScreen(
             titulo = "Lectura",
             descripcion = "Leer y responder",
             icono = Icons.Default.AutoStories,
-            fondo = Color(0xFFE5EEF9),
-            color = CodigoAzul,
+            fondo = AzulClaro,
+            color = AzulPrimario,
             destino = Screen.Lectura
         ),
         OpcionActividadCodigo(
             titulo = "Matemática",
             descripcion = "Practicar números",
             icono = Icons.Default.Calculate,
-            fondo = Color(0xFFFFE8CB),
-            color = Color(0xFF85460D),
+            fondo = NaranjaClaro,
+            color = NaranjaMatematica,
             destino = Screen.Matematica
         ),
         OpcionActividadCodigo(
             titulo = "Tomar foto",
             descripcion = "Mostrar mi trabajo",
             icono = Icons.Default.CameraAlt,
-            fondo = Color(0xFFE0EFE7),
-            color = Color(0xFF176B60),
+            fondo = VerdeClaro,
+            color = VerdeLogro,
             destino = Screen.Camara
         ),
         OpcionActividadCodigo(
             titulo = "Mi voz",
             descripcion = "Grabar y escuchar",
             icono = Icons.Default.Mic,
-            fondo = Color(0xFFF9E4E2),
-            color = Color(0xFF963C46),
+            fondo = RojoClaro,
+            color = RojoSuave,
             destino = Screen.Audio
         )
     )
@@ -117,7 +115,7 @@ fun StudentCodeScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFFFFAF2)
+        color = FondoCalido
     ) {
         BoxWithConstraints(
             modifier = Modifier
@@ -143,7 +141,7 @@ fun StudentCodeScreen(
                     TextButton(
                         onClick = { navController.popBackStack() },
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = CodigoAzul
+                            contentColor = AzulPrimario
                         )
                     ) {
                         Icon(
@@ -159,12 +157,12 @@ fun StudentCodeScreen(
 
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFFE5EEF9)
+                    color = AzulClaro
                 ) {
                     Icon(
                         imageVector = Icons.Default.VpnKey,
                         contentDescription = null,
-                        tint = CodigoAzul,
+                        tint = AzulPrimario,
                         modifier = Modifier
                             .padding(16.dp)
                             .size(32.dp)
@@ -176,7 +174,7 @@ fun StudentCodeScreen(
                     fontSize = 26.sp,
                     lineHeight = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = CodigoTexto,
+                    color = TextoPrincipal,
                     textAlign = TextAlign.Center
                 )
 
@@ -185,7 +183,7 @@ fun StudentCodeScreen(
                             "para abrir tu actividad asignada.",
                     fontSize = 15.sp,
                     lineHeight = 22.sp,
-                    color = CodigoTextoSecundario,
+                    color = TextoSecundario,
                     textAlign = TextAlign.Center
                 )
 
@@ -197,7 +195,7 @@ fun StudentCodeScreen(
                     color = Color.White,
                     border = BorderStroke(
                         1.dp,
-                        Color(0xFFE0E5E9)
+                        BordeSuave
                     )
                 ) {
                     Column(
@@ -208,7 +206,7 @@ fun StudentCodeScreen(
                             text = "Mi código de sesión",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = CodigoTexto
+                            color = TextoPrincipal
                         )
 
                         OutlinedTextField(
@@ -252,15 +250,15 @@ fun StudentCodeScreen(
                                 textAlign = TextAlign.Center
                             ),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = CodigoTexto,
-                                unfocusedTextColor = CodigoTexto,
-                                errorTextColor = CodigoTexto,
-                                focusedBorderColor = CodigoAzul,
-                                unfocusedBorderColor = Color(0xFF8796A5),
-                                focusedLabelColor = CodigoAzul,
-                                unfocusedLabelColor = CodigoTextoSecundario,
-                                focusedLeadingIconColor = CodigoAzul,
-                                unfocusedLeadingIconColor = CodigoTextoSecundario,
+                                focusedTextColor = TextoPrincipal,
+                                unfocusedTextColor = TextoPrincipal,
+                                errorTextColor = TextoPrincipal,
+                                focusedBorderColor = AzulPrimario,
+                                unfocusedBorderColor = BordeCampo,
+                                focusedLabelColor = AzulPrimario,
+                                unfocusedLabelColor = TextoSecundario,
+                                focusedLeadingIconColor = AzulPrimario,
+                                unfocusedLeadingIconColor = TextoSecundario,
                                 focusedContainerColor = Color.White,
                                 unfocusedContainerColor = Color.White,
                                 errorContainerColor = Color.White
@@ -273,7 +271,7 @@ fun StudentCodeScreen(
                     onClick = { abrirActividad() },
                     enabled = !estado.validando,
                     modifier = Modifier.widthIn(max = 500.dp).fillMaxWidth().heightIn(min = 56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CodigoAzul)
+                    colors = ButtonDefaults.buttonColors(containerColor = AzulPrimario)
                 ) {
                     Text(if (estado.validando) "Comprobando…" else "Comenzar actividad asignada")
                 }
@@ -282,7 +280,7 @@ fun StudentCodeScreen(
                     text = "¿Qué vamos a hacer hoy?",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = CodigoTexto,
+                    color = TextoPrincipal,
                     textAlign = TextAlign.Center
                 )
 
@@ -317,14 +315,14 @@ fun StudentCodeScreen(
                     text = "¿No tienes código? Pídeselo a tu profesora o asistente.",
                     fontSize = 13.sp,
                     lineHeight = 20.sp,
-                    color = CodigoTextoSecundario,
+                    color = TextoSecundario,
                     textAlign = TextAlign.Center
                 )
 
                 Text(
                     text = "Escuela Marcela Paz • San Bernardo",
                     fontSize = 12.sp,
-                    color = CodigoTextoSecundario,
+                    color = TextoSecundario,
                     textAlign = TextAlign.Center
                 )
             }

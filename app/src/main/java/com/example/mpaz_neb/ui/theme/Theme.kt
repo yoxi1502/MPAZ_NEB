@@ -5,26 +5,40 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF2456A6),
-    secondary = Color(0xFF176B60),
-    tertiary = Color(0xFF85460D),
-    background = Color(0xFFFFFAF2),
+// Esquema Material 3 de la app. Se usa solo modo claro para asegurar
+// buen contraste y legibilidad en tabletas de sala de clases.
+private val EsquemaClaro = lightColorScheme(
+    primary = AzulPrimario,
+    onPrimary = Color.White,
+    primaryContainer = AzulClaro,
+    onPrimaryContainer = AzulPrimario,
+    secondary = VerdeLogro,
+    onSecondary = Color.White,
+    secondaryContainer = VerdeClaro,
+    onSecondaryContainer = VerdeLogro,
+    tertiary = NaranjaMatematica,
+    onTertiary = Color.White,
+    tertiaryContainer = NaranjaClaro,
+    onTertiaryContainer = NaranjaMatematica,
+    error = RojoSuave,
+    onError = Color.White,
+    errorContainer = RojoClaro,
+    onErrorContainer = RojoSuave,
+    background = FondoCalido,
+    onBackground = TextoPrincipal,
     surface = Color.White,
-    onBackground = Color(0xFF24374B),
-    onSurface = Color(0xFF24374B)
+    onSurface = TextoPrincipal,
+    onSurfaceVariant = TextoSecundario,
+    outline = BordeCampo,
+    outlineVariant = BordeSuave
 )
 
 @Composable
 fun MPAZ_NEBTheme(
-    darkTheme: Boolean = false,
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = LightColorScheme
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = EsquemaClaro,
         typography = Typography,
         content = content
     )
