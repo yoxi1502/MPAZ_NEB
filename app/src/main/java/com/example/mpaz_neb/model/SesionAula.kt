@@ -25,6 +25,7 @@ data class SesionAula(
     val id: String,
     val codigo: String,
     val estudiante: String,
+    val asistente: String,
     val curso: String,
     val modulo: ModuloActividad,
     val contenido: String,

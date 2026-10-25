@@ -14,6 +14,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavHostController
 import com.example.mpaz_neb.model.EstadoSesion
+import com.example.mpaz_neb.validacion.Validadores
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Error
 import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.viewmodel.SesionAulaViewModel
 
@@ -65,6 +71,9 @@ fun SesionEnCursoScreen(
                     Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(sesion.estudiante, fontWeight = FontWeight.Bold)
                         Text(sesion.curso)
+                        if (sesion.asistente.isNotBlank()) {
+                            Text("Asistente responsable: ${sesion.asistente}")
+                        }
                         Text("${sesion.modulo.etiqueta} · ${sesion.contenido}")
                         Text("Estado: ${sesion.estado.etiqueta}")
                         Text("Prácticas completadas: ${sesion.intentosCompletados}")
@@ -73,6 +82,15 @@ fun SesionEnCursoScreen(
                         }
                     }
                 }
+
+                FormularioObservacion(
+                    texto = estado.observacion,
+                    error = estado.errorObservacion,
+                    guardando = estado.guardandoObservacion,
+                    guardada = estado.observacionGuardada,
+                    onCambio = sesionViewModel::actualizarObservacion,
+                    onGuardar = sesionViewModel::guardarObservacion
+                )
 
                 if (sesion.estado != EstadoSesion.FINALIZADA) {
                     Button(enabled = !estado.guardando && !estado.cargando,
@@ -117,5 +135,81 @@ fun SesionEnCursoScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * Formulario para que la asistente registre una observación pedagógica general
+ * y ficticia de la sesión. La validación vive en Validadores (vía ViewModel).
+ */
+@Composable
+private fun FormularioObservacion(
+    texto: String,
+    error: String?,
+    guardando: Boolean,
+    guardada: Boolean,
+    onCambio: (String) -> Unit,
+    onGuardar: () -> Unit
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Observación pedagógica", fontWeight = FontWeight.Bold)
+            Text(
+                "Registra solo comentarios generales sobre la práctica. " +
+                        "No incluyas diagnósticos, notas ni datos personales.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            OutlinedTextField(
+                value = texto,
+                onValueChange = onCambio,
+                enabled = !guardando,
+                label = { Text("Observación") },
+                placeholder = { Text("Ej: Necesitó apoyo para ubicar la idea principal.") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+                isError = error != null,
+                leadingIcon = { Icon(Icons.Default.EditNote, contentDescription = null) },
+                trailingIcon = {
+                    when {
+                        error != null -> Icon(
+                            Icons.Default.Error,
+                            contentDescription = "Error en la observación"
+                        )
+                        guardada -> Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = "Observación guardada",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                },
+                supportingText = {
+                    Row(Modifier.fillMaxWidth()) {
+                        Text(
+                            text = error ?: if (guardada) "Observación guardada." else "",
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text("${texto.trim().length}/${Validadores.OBSERVACION_MAX}")
+                    }
+                }
+            )
+
+            AnimatedVisibility(visible = guardando) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            Button(
+                onClick = onGuardar,
+                enabled = !guardando,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+            ) {
+                Text(if (guardando) "Guardando…" else "Guardar observación")
+            }
+        }
     }
 }

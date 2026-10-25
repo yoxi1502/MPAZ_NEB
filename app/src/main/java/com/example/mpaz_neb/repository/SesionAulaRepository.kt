@@ -9,6 +9,7 @@ import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.ResultadoIntento
 import com.example.mpaz_neb.model.SesionAula
+import com.example.mpaz_neb.validacion.Validadores
 import java.security.SecureRandom
 import java.util.Locale
 import java.util.UUID
@@ -32,7 +33,8 @@ class SesionAulaRepository(context: Context) {
     suspend fun crearSesion(
         modulo: ModuloActividad,
         curso: String,
-        estudiante: String
+        estudiante: String,
+        asistente: String
     ): SesionAula {
         require(curso in CURSOS && estudiante in ESTUDIANTES) {
             "Selecciona un curso y un estudiante de la lista."
@@ -52,7 +54,8 @@ class SesionAulaRepository(context: Context) {
             } while (codigo in codigosUsados)
             creada = SesionAula(
                 id = UUID.randomUUID().toString(), codigo = codigo,
-                estudiante = estudiante, curso = curso, modulo = modulo,
+                estudiante = estudiante, asistente = asistente,
+                curso = curso, modulo = modulo,
                 contenido = modulo.contenido, estado = EstadoSesion.CREADA,
                 creadaEn = System.currentTimeMillis()
             )
@@ -101,7 +104,7 @@ class SesionAulaRepository(context: Context) {
     }
 
     suspend fun guardarObservacion(id: String, observacion: String) {
-        require(observacion.length <= 1000) { "La observación admite hasta 1000 caracteres." }
+        Validadores.validarObservacion(observacion)?.let { error -> throw IllegalArgumentException(error) }
         appContext.progresoDataStore.edit { preferencias ->
             val todas = leerSesiones(preferencias)
             require(todas.any { it.id == id }) { "No se encontró la sesión." }
@@ -155,7 +158,9 @@ class SesionAulaRepository(context: Context) {
                 val intentos = objeto.getJSONArray("resultados")
                 SesionAula(
                     id = objeto.getString("id"), codigo = objeto.getString("codigo"),
-                    estudiante = objeto.getString("estudiante"), curso = objeto.getString("curso"),
+                    estudiante = objeto.getString("estudiante"),
+                    asistente = objeto.optString("asistente", ""),
+                    curso = objeto.getString("curso"),
                     modulo = ModuloActividad.valueOf(objeto.getString("modulo")),
                     contenido = objeto.getString("contenido"),
                     estado = EstadoSesion.valueOf(objeto.getString("estado")),
@@ -181,7 +186,8 @@ class SesionAulaRepository(context: Context) {
                         .put("total", it.total).put("fecha", it.fecha))
                 }
                 lista.put(JSONObject().put("id", sesion.id).put("codigo", sesion.codigo)
-                    .put("estudiante", sesion.estudiante).put("curso", sesion.curso)
+                    .put("estudiante", sesion.estudiante).put("asistente", sesion.asistente)
+                    .put("curso", sesion.curso)
                     .put("modulo", sesion.modulo.name).put("contenido", sesion.contenido)
                     .put("estado", sesion.estado.name).put("creadaEn", sesion.creadaEn)
                     .put("observacion", sesion.observacion)

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.SesionAulaUiState
 import com.example.mpaz_neb.repository.SesionAulaRepository
+import com.example.mpaz_neb.validacion.Validadores
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,13 @@ class SesionAulaViewModel(
                         actual.copy(
                             sesion = sesion,
                             cargando = false,
-                            error = null
+                            error = null,
+                            // Si la asistente no está escribiendo, se muestra lo guardado
+                            observacion = if (actual.observacionEditada) {
+                                actual.observacion
+                            } else {
+                                sesion?.observacion.orEmpty()
+                            }
                         )
                     }
                 }
@@ -87,16 +94,66 @@ class SesionAulaViewModel(
         return errorCurso == null && errorEstudiante == null
     }
 
-    fun generarCodigo(onExito: () -> Unit) {
+    fun actualizarObservacion(texto: String) {
+        _uiState.update {
+            it.copy(
+                observacion = texto,
+                observacionEditada = true,
+                errorObservacion = null,
+                observacionGuardada = false
+            )
+        }
+    }
+
+    /** Valida la observación pedagógica y la guarda en la sesión actual. */
+    fun guardarObservacion() {
+        val estado = _uiState.value
+        val sesionId = estado.sesion?.id ?: return
+        if (estado.guardandoObservacion) return
+
+        val error = Validadores.validarObservacion(estado.observacion)
+        if (error != null) {
+            _uiState.update { it.copy(errorObservacion = error, observacionGuardada = false) }
+            return
+        }
+
+        _uiState.update { it.copy(guardandoObservacion = true, errorObservacion = null) }
+        viewModelScope.launch {
+            try {
+                repository.guardarObservacion(sesionId, estado.observacion)
+                _uiState.update {
+                    it.copy(
+                        observacion = estado.observacion.trim(),
+                        guardandoObservacion = false,
+                        observacionEditada = false,
+                        observacionGuardada = true
+                    )
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        guardandoObservacion = false,
+                        errorObservacion = e.message ?: "No se pudo guardar la observación."
+                    )
+                }
+            }
+        }
+    }
+
+    fun generarCodigo(asistente: String, onExito: () -> Unit) {
         if (!validarSeleccion()) return
         val estadoActual = _uiState.value
+        if (estadoActual.guardando) return
         _uiState.update { it.copy(guardando = true, error = null) }
         viewModelScope.launch {
             try {
                 repository.crearSesion(
                     modulo = estadoActual.modulo,
                     curso = estadoActual.curso,
-                    estudiante = estadoActual.estudiante
+                    estudiante = estadoActual.estudiante,
+                    asistente = asistente
                 )
                 _uiState.update { it.copy(guardando = false) }
                 onExito()

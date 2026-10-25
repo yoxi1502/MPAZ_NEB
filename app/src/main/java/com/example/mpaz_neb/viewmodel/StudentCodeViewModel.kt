@@ -3,10 +3,11 @@ package com.example.mpaz_neb.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.SesionAula
 import com.example.mpaz_neb.model.StudentCodeUiState
 import com.example.mpaz_neb.repository.SesionAulaRepository
+import com.example.mpaz_neb.validacion.Validadores
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,38 +20,30 @@ class StudentCodeViewModel(
 
     private val repository = SesionAulaRepository(application)
 
-    private val _uiState = MutableStateFlow(
-        StudentCodeUiState()
-    )
-
-    val uiState: StateFlow<StudentCodeUiState> =
-        _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(StudentCodeUiState())
+    val uiState: StateFlow<StudentCodeUiState> = _uiState.asStateFlow()
 
     fun actualizarCodigo(codigo: String) {
-        _uiState.update { estado ->
-            estado.copy(
-                codigo = codigo,
+        _uiState.update {
+            it.copy(
+                codigo = Validadores.normalizarCodigo(codigo),
                 errorCodigo = null
             )
         }
     }
 
-    fun validarCodigo(
-        moduloRequerido: ModuloActividad? = null,
-        onExito: (SesionAula?) -> Unit
-    ) {
-        val codigo = _uiState.value.codigo.trim().uppercase()
+    /**
+     * Valida el formato del código y luego verifica en la persistencia local
+     * que corresponda a la sesión abierta. El estudiante solo puede entrar a la
+     * actividad que le asignó la asistente.
+     */
+    fun validarCodigo(onExito: (SesionAula) -> Unit) {
+        if (_uiState.value.validando) return
+        val codigo = Validadores.normalizarCodigo(_uiState.value.codigo)
 
-        if (codigo.isBlank()) {
-            _uiState.update {
-                it.copy(errorCodigo = "Escribe el código que te entregó tu profesora.")
-            }
-            return
-        }
-
-        if (codigo == CODIGO_DEMO) {
-            _uiState.update { it.copy(errorCodigo = null) }
-            onExito(null)
+        val error = Validadores.validarCodigoSesion(codigo)
+        if (error != null) {
+            _uiState.update { it.copy(errorCodigo = error) }
             return
         }
 
@@ -58,22 +51,20 @@ class StudentCodeViewModel(
 
         viewModelScope.launch {
             try {
-                val sesion = repository.ingresarConCodigo(codigo, moduloRequerido)
+                val sesion = repository.ingresarConCodigo(codigo)
                 _uiState.update { it.copy(validando = false) }
                 onExito(sesion)
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         validando = false,
-                        errorCodigo = e.message ?: "El código no es correcto. Revísalo e intenta nuevamente."
+                        errorCodigo = e.message
+                            ?: "El código no es correcto. Revísalo e intenta nuevamente."
                     )
                 }
             }
         }
-    }
-
-    companion object {
-        /** Código de demostración (dato ficticio) para probar la app sin generar una sesión. */
-        const val CODIGO_DEMO = "MPAZ-402"
     }
 }
