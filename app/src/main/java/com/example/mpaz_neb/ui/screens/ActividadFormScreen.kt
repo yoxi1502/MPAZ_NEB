@@ -7,10 +7,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
