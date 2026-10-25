@@ -33,14 +33,11 @@ import com.example.mpaz_neb.ui.screens.CamaraScreen
 import com.example.mpaz_neb.ui.screens.HomeScreen
 import com.example.mpaz_neb.ui.screens.LecturaScreen
 import com.example.mpaz_neb.ui.screens.MatematicaScreen
-// import com.example.mpaz_neb.ui.screens.ProgresoScreen
+import com.example.mpaz_neb.ui.screens.ProgresoScreen
 import com.example.mpaz_neb.ui.screens.SesionEnCursoScreen
 import com.example.mpaz_neb.ui.screens.StudentCodeScreen
 import com.example.mpaz_neb.ui.screens.TeacherLoginScreen
 import com.example.mpaz_neb.viewmodel.SesionUsuarioViewModel
-import com.example.mpaz_neb.navigation.NavigationEvent
-
-private const val DURACION_TRANSICION = 320
 
 private const val DURACION_TRANSICION = 320
 
@@ -108,13 +105,11 @@ fun AppNavigation(
             }
         }
 
-        /*
         composable(Screen.Progreso.route) {
             RutaProtegida(sesionUsuario, navController) {
                 ProgresoScreen(navController = navController)
             }
         }
-        */
 
         // Recurso de la asistente: foto del trabajo como evidencia de la práctica
         composable(Screen.Camara.route) {
@@ -154,13 +149,6 @@ fun AppNavigation(
             }
         }
 
-        // Recurso de la asistente: foto del trabajo como evidencia de la práctica
-        composable(Screen.Camara.route) {
-            RutaProtegida(sesionUsuario, navController) {
-                CamaraScreen(navController = navController)
-            }
-        }
-
         // ---- Actividades del estudiante ----
 
         composable(Screen.Lectura.route) {
@@ -182,6 +170,7 @@ fun AppNavigation(
                                 }
                             }
                         }
+
                         NavigationEvent.PopBackStack -> navController.popBackStack()
                         NavigationEvent.NavigateUp -> navController.navigateUp()
                     }
