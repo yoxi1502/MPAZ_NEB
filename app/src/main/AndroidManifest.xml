@@ -2,7 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Necesario desde Android 11 para encontrar el motor de texto a voz del sistema -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -10,10 +16,6 @@
 
     <uses-feature
         android:name="android.hardware.camera.autofocus"
-        android:required="false" />
-
-    <uses-feature
-        android:name="android.hardware.microphone"
         android:required="false" />
 
     <application

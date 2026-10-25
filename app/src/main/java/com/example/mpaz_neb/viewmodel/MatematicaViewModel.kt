@@ -48,17 +48,20 @@ class MatematicaViewModel(
         PreguntaMatematica(
             enunciado = "¿Cuánto es 3 + 2?",
             opciones = listOf(4, 5, 6),
-            respuestaCorrecta = 5
+            respuestaCorrecta = 5,
+            procedimiento = "Tienes 3 y agregas 2 más. Cuenta: 4, 5. ¡Son 5!"
         ),
         PreguntaMatematica(
             enunciado = "¿Cuánto es 7 - 3?",
             opciones = listOf(3, 4, 5),
-            respuestaCorrecta = 4
+            respuestaCorrecta = 4,
+            procedimiento = "Tienes 7 y quitas 3. Cuenta hacia atrás: 6, 5, 4. Quedan 4."
         ),
         PreguntaMatematica(
             enunciado = "¿Cuánto es 2 + 6?",
             opciones = listOf(6, 7, 8),
-            respuestaCorrecta = 8
+            respuestaCorrecta = 8,
+            procedimiento = "Parte desde el número mayor, 6, y suma 2: 7, 8. ¡Son 8!"
         )
     )
 

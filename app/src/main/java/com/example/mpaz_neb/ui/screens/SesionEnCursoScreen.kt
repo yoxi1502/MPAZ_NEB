@@ -18,6 +18,7 @@ import com.example.mpaz_neb.validacion.Validadores
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Error
 import com.example.mpaz_neb.navigation.Screen
@@ -90,6 +91,13 @@ fun SesionEnCursoScreen(
                     guardada = estado.observacionGuardada,
                     onCambio = sesionViewModel::actualizarObservacion,
                     onGuardar = sesionViewModel::guardarObservacion
+                )
+
+                EvidenciaPractica(
+                    habilitado = !estado.guardando,
+                    onFoto = {
+                        navController.navigate(Screen.Camara.route) { launchSingleTop = true }
+                    }
                 )
 
                 if (sesion.estado != EstadoSesion.FINALIZADA) {
@@ -209,6 +217,40 @@ private fun FormularioObservacion(
                     .heightIn(min = 52.dp)
             ) {
                 Text(if (guardando) "Guardando…" else "Guardar observación")
+            }
+        }
+    }
+}
+
+/**
+ * Recurso nativo de la asistente: cámara para fotografiar el trabajo en papel.
+ * Pide permiso en tiempo de ejecución y queda solo en el perfil del equipo pedagógico.
+ */
+@Composable
+private fun EvidenciaPractica(
+    habilitado: Boolean,
+    onFoto: () -> Unit
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Evidencia de la práctica", fontWeight = FontWeight.Bold)
+            Text(
+                "Uso exclusivo de la asistente. No registres rostros ni datos personales.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            OutlinedButton(
+                onClick = onFoto,
+                enabled = habilitado,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+            ) {
+                Icon(Icons.Default.CameraAlt, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Fotografiar el trabajo en papel")
             }
         }
     }
