@@ -16,6 +16,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavHostController
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.UsuarioSesion
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AccountCircle
+import java.text.DateFormat
+import java.util.Date
 import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.viewmodel.SesionAulaViewModel
@@ -23,6 +28,8 @@ import com.example.mpaz_neb.viewmodel.SesionAulaViewModel
 @Composable
 fun AssignActivityScreen(
     navController: NavHostController,
+    usuario: UsuarioSesion,
+    onCerrarSesion: () -> Unit,
     sesionViewModel: SesionAulaViewModel = obtenerViewModel()
 ) {
     val estado by sesionViewModel.uiState.collectAsState()
@@ -46,13 +53,12 @@ fun AssignActivityScreen(
             ) {
                 TextButton(
                     enabled = !estado.guardando,
-                    onClick = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    }
-                ) { Text("Cerrar acceso docente") }
+                    onClick = onCerrarSesion
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Cerrar sesión")
+                }
 
                 TextButton(
                     enabled = !estado.guardando,
@@ -61,6 +67,8 @@ fun AssignActivityScreen(
                     }
                 ) { Text("Resultados") }
             }
+
+            EncabezadoUsuario(usuario)
 
             Text(
                 text = "Asignar actividad",
@@ -148,7 +156,7 @@ fun AssignActivityScreen(
             Button(
                 enabled = habilitado,
                 onClick = {
-                    sesionViewModel.generarCodigo {
+                    sesionViewModel.generarCodigo(asistente = usuario.alias) {
                         navController.navigate(Screen.SesionEnCurso.route) { launchSingleTop = true }
                     }
                 },
@@ -163,6 +171,40 @@ fun AssignActivityScreen(
                 "Los estudiantes de la lista son alias de demostración.",
                 style = MaterialTheme.typography.bodySmall
             )
+        }
+    }
+}
+
+@Composable
+private fun EncabezadoUsuario(usuario: UsuarioSesion) {
+    val ultimoAcceso = remember(usuario.ultimoAcceso) {
+        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+            .format(Date(usuario.ultimoAcceso))
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                Icons.Default.AccountCircle,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp)
+            )
+            Column {
+                Text("Hola, ${usuario.alias}", fontWeight = FontWeight.Bold)
+                Text(
+                    "${usuario.perfil.etiqueta} · Último acceso: $ultimoAcceso",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

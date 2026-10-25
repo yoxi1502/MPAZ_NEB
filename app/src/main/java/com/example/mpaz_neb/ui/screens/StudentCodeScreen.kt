@@ -10,8 +10,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoStories
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Mic
@@ -63,22 +61,6 @@ fun StudentCodeScreen(
 
     val actividades = listOf(
         OpcionActividadCodigo(
-            titulo = "Lectura",
-            descripcion = "Leer y responder",
-            icono = Icons.Default.AutoStories,
-            fondo = AzulClaro,
-            color = AzulPrimario,
-            destino = Screen.Lectura
-        ),
-        OpcionActividadCodigo(
-            titulo = "Matemática",
-            descripcion = "Practicar números",
-            icono = Icons.Default.Calculate,
-            fondo = NaranjaClaro,
-            color = NaranjaMatematica,
-            destino = Screen.Matematica
-        ),
-        OpcionActividadCodigo(
             titulo = "Tomar foto",
             descripcion = "Mostrar mi trabajo",
             icono = Icons.Default.CameraAlt,
@@ -96,18 +78,13 @@ fun StudentCodeScreen(
         )
     )
 
+    // El estudiante solo entra a la actividad asignada en su sesión
     fun abrirActividad(destino: Screen? = null) {
-        val moduloRequerido = when (destino) {
-            Screen.Lectura -> ModuloActividad.LECTURA
-            Screen.Matematica -> ModuloActividad.MATEMATICA
-            else -> null
-        }
-        studentCodeViewModel.validarCodigo(moduloRequerido) { sesion ->
+        studentCodeViewModel.validarCodigo { sesion ->
             focusManager.clearFocus()
-            val ruta = destino?.route ?: when (sesion?.modulo) {
+            val ruta = destino?.route ?: when (sesion.modulo) {
                 ModuloActividad.LECTURA -> Screen.Lectura.route
                 ModuloActividad.MATEMATICA -> Screen.Matematica.route
-                null -> Screen.Lectura.route
             }
             navController.navigate(ruta) { launchSingleTop = true }
         }
