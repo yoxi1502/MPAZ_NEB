@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -34,15 +33,39 @@ import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
 import com.example.mpaz_neb.model.LecturaUiState
 import com.example.mpaz_neb.viewmodel.LecturaViewModel
+import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
+import com.example.mpaz_neb.nativo.LectorVoz
+import com.example.mpaz_neb.ui.components.BotonEscuchar
+import com.example.mpaz_neb.ui.components.ContadorAnimado
+import com.example.mpaz_neb.ui.components.EstrellaLogro
+import com.example.mpaz_neb.ui.components.rememberLectorVoz
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LecturaScreen(
     navController: NavController,
-    lecturaViewModel: LecturaViewModel = obtenerViewModel()
+    lecturaViewModel: LecturaViewModel = obtenerViewModel(),
+    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel()
 ) {
     val estado by lecturaViewModel.uiState.collectAsState()
+    val preferencias by preferenciasViewModel.uiState.collectAsState()
+
+    // Recurso nativo: texto a voz
+    val lector = rememberLectorVoz()
+
+    var confirmarEnvio by rememberSaveable { mutableStateOf(false) }
+
+    // Al cambiar de pregunta se detiene la lectura en voz alta
+    LaunchedEffect(estado.indiceActual, estado.finalizada) {
+        lector.detener()
+    }
 
     var actividadIniciada by rememberSaveable {
         mutableStateOf(false)
@@ -170,6 +193,20 @@ fun LecturaScreen(
                             trackColor = PistaProgreso
                         )
 
+                        val lectorVisible = if (preferencias.lecturaEnVoz) lector else null
+                        val alPresionar: () -> Unit = {
+                            if (
+                                estado.respuestaComprobada &&
+                                estado.indiceActual == estado.preguntas.lastIndex
+                            ) {
+                                confirmarEnvio = true
+                            } else if (estado.respuestaComprobada) {
+                                lecturaViewModel.siguientePregunta()
+                            } else {
+                                lecturaViewModel.comprobarRespuesta()
+                            }
+                        }
+
                         if (pantallaAncha) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -177,29 +214,54 @@ fun LecturaScreen(
                             ) {
                                 TextoLectura(
                                     estado = estado,
+                                    lector = lectorVisible,
                                     modifier = Modifier.weight(1f)
                                 )
 
                                 PreguntaLecturaPanel(
                                     estado = estado,
                                     lecturaViewModel = lecturaViewModel,
+                                    lector = lectorVisible,
+                                    onBotonPrincipal = alPresionar,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
                         } else {
                             TextoLectura(
-                                estado = estado
+                                estado = estado,
+                                lector = lectorVisible
                             )
 
                             PreguntaLecturaPanel(
                                 estado = estado,
-                                lecturaViewModel = lecturaViewModel
+                                lecturaViewModel = lecturaViewModel,
+                                lector = lectorVisible,
+                                onBotonPrincipal = alPresionar
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    // Confirmación antes de enviar las respuestas (requisito de accesibilidad del caso)
+    if (confirmarEnvio) {
+        AlertDialog(
+            onDismissRequest = { confirmarEnvio = false },
+            icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
+            title = { Text("¿Terminaste?") },
+            text = { Text("Vamos a guardar tus respuestas para que tu profesora pueda verlas.") },
+            confirmButton = {
+                Button(onClick = {
+                    confirmarEnvio = false
+                    lecturaViewModel.siguientePregunta()
+                }) { Text("Sí, enviar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmarEnvio = false }) { Text("Revisar") }
+            }
+        )
     }
 }
 
@@ -302,6 +364,7 @@ private fun InicioActividadLectura(
 @Composable
 private fun TextoLectura(
     estado: LecturaUiState,
+    lector: LectorVoz?,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -347,6 +410,16 @@ private fun TextoLectura(
                 fontSize = 20.sp,
                 lineHeight = 32.sp
             )
+
+            if (lector != null) {
+                BotonEscuchar(
+                    texto = "${estado.titulo}. ${estado.texto}",
+                    lector = lector,
+                    color = VerdeLogro,
+                    etiqueta = "Escuchar la historia",
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -355,6 +428,8 @@ private fun TextoLectura(
 private fun PreguntaLecturaPanel(
     estado: LecturaUiState,
     lecturaViewModel: LecturaViewModel,
+    lector: LectorVoz?,
+    onBotonPrincipal: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pregunta = estado.preguntas
@@ -365,19 +440,43 @@ private fun PreguntaLecturaPanel(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Piensa y elige",
-            color = AzulPrimario,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // La pregunta entra deslizándose cada vez que cambia
+        AnimatedContent(
+            targetState = estado.indiceActual,
+            transitionSpec = {
+                (slideInHorizontally { ancho -> ancho / 2 } + fadeIn()) togetherWith
+                        (slideOutHorizontally { ancho -> -ancho / 2 } + fadeOut())
+            },
+            label = "Cambio de pregunta"
+        ) { indice ->
+            val preguntaMostrada = estado.preguntas.getOrNull(indice) ?: pregunta
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = preguntaMostrada.tipo.etiqueta.uppercase(),
+                    color = AzulPrimario,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
-        Text(
-            text = pregunta.enunciado,
-            fontSize = 23.sp,
-            lineHeight = 30.sp,
-            fontWeight = FontWeight.Bold
-        )
+                Text(
+                    text = preguntaMostrada.enunciado,
+                    fontSize = 23.sp,
+                    lineHeight = 30.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        if (lector != null) {
+            BotonEscuchar(
+                texto = pregunta.enunciado + " " + pregunta.opciones
+                    .mapIndexed { i, opcion -> "Opción ${('A'.code + i).toChar()}: $opcion." }
+                    .joinToString(" "),
+                lector = lector,
+                color = AzulPrimario,
+                etiqueta = "Escuchar la pregunta"
+            )
+        }
 
         Column(
             modifier = Modifier.selectableGroup(),
@@ -500,10 +599,10 @@ private fun PreguntaLecturaPanel(
             ) {
                 Text(
                     text = if (correcta) {
-                        "¡Muy bien! Encontraste la respuesta."
+                        "¡Muy bien! ${pregunta.retroalimentacion}"
                     } else {
-                        "Sigamos aprendiendo. La respuesta es: " +
-                                "${pregunta.respuestaCorrecta}."
+                        "¡Buen intento! La respuesta es: ${pregunta.respuestaCorrecta}. " +
+                                pregunta.retroalimentacion
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -529,13 +628,7 @@ private fun PreguntaLecturaPanel(
         }
 
         Button(
-            onClick = {
-                if (estado.respuestaComprobada) {
-                    lecturaViewModel.siguientePregunta()
-                } else {
-                    lecturaViewModel.comprobarRespuesta()
-                }
-            },
+            onClick = onBotonPrincipal,
             enabled = estado.respuestaSeleccionada != null &&
                     !estado.guardando,
             modifier = Modifier
@@ -575,12 +668,7 @@ private fun ResultadoLectura(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Icon(
-            imageVector = Icons.Default.Star,
-            contentDescription = null,
-            tint = Dorado,
-            modifier = Modifier.size(80.dp)
-        )
+        EstrellaLogro()
 
         Text(
             text = "¡Terminaste tu lectura!",
@@ -610,10 +698,16 @@ private fun ResultadoLectura(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                ContadorAnimado(
+                    valor = estado.aciertos,
+                    total = estado.preguntas.size,
+                    color = VerdeLogro
+                )
+
                 Text(
-                    text = "${estado.aciertos} de ${estado.preguntas.size}",
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    text = "de ${estado.preguntas.size}",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
                     color = VerdeLogro
                 )
 

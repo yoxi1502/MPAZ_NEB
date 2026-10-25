@@ -24,15 +24,20 @@ import java.util.Date
 import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.viewmodel.SesionAulaViewModel
+import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 fun AssignActivityScreen(
     navController: NavHostController,
     usuario: UsuarioSesion,
     onCerrarSesion: () -> Unit,
-    sesionViewModel: SesionAulaViewModel = obtenerViewModel()
+    sesionViewModel: SesionAulaViewModel = obtenerViewModel(),
+    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel()
 ) {
     val estado by sesionViewModel.uiState.collectAsState()
+    val preferencias by preferenciasViewModel.uiState.collectAsState()
     val sesionAbierta = estado.sesion?.estado?.let { it != EstadoSesion.FINALIZADA } == true
 
     BackHandler(enabled = estado.guardando) { }
@@ -167,11 +172,61 @@ fun AssignActivityScreen(
                 Text(if (estado.guardando) "Guardando sesión…" else "Generar código de sesión")
             }
 
+            ApoyosDelDispositivo(
+                lecturaEnVoz = preferencias.lecturaEnVoz,
+                onLecturaEnVoz = preferenciasViewModel::cambiarLecturaEnVoz
+            )
+
             Text(
                 "Los estudiantes de la lista son alias de demostración.",
                 style = MaterialTheme.typography.bodySmall
             )
         }
+    }
+}
+
+/** Interruptor para activar o desactivar la lectura en voz alta en este dispositivo. */
+@Composable
+private fun ApoyosDelDispositivo(
+    lecturaEnVoz: Boolean,
+    onLecturaEnVoz: (Boolean) -> Unit
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Apoyos para el estudiante", fontWeight = FontWeight.Bold)
+            FilaInterruptor(
+                icono = Icons.AutoMirrored.Filled.VolumeUp,
+                titulo = "Lectura en voz alta",
+                descripcion = "Botón para escuchar textos y preguntas.",
+                activo = lecturaEnVoz,
+                onCambio = onLecturaEnVoz
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilaInterruptor(
+    icono: ImageVector,
+    titulo: String,
+    descripcion: String,
+    activo: Boolean,
+    onCambio: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(icono, contentDescription = null)
+        Column(Modifier.weight(1f)) {
+            Text(titulo)
+            Text(descripcion, style = MaterialTheme.typography.bodyMedium)
+        }
+        Switch(checked = activo, onCheckedChange = onCambio)
     }
 }
 

@@ -1,5 +1,10 @@
 package com.example.mpaz_neb.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -19,7 +24,6 @@ import com.example.mpaz_neb.model.PerfilUsuario
 import com.example.mpaz_neb.model.UsuarioSesion
 import com.example.mpaz_neb.model.UsuarioSesionUiState
 import com.example.mpaz_neb.ui.screens.AssignActivityScreen
-import com.example.mpaz_neb.ui.screens.AudioScreen
 import com.example.mpaz_neb.ui.screens.CamaraScreen
 import com.example.mpaz_neb.ui.screens.HomeScreen
 import com.example.mpaz_neb.ui.screens.LecturaScreen
@@ -29,6 +33,8 @@ import com.example.mpaz_neb.ui.screens.SesionEnCursoScreen
 import com.example.mpaz_neb.ui.screens.StudentCodeScreen
 import com.example.mpaz_neb.ui.screens.TeacherLoginScreen
 import com.example.mpaz_neb.viewmodel.SesionUsuarioViewModel
+
+private const val DURACION_TRANSICION = 320
 
 @Composable
 fun AppNavigation(
@@ -47,7 +53,22 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Home.route,
+        // Transiciones animadas entre pantallas
+        enterTransition = {
+            fadeIn(tween(DURACION_TRANSICION)) +
+                    slideInHorizontally(tween(DURACION_TRANSICION)) { ancho -> ancho / 5 }
+        },
+        exitTransition = {
+            fadeOut(tween(DURACION_TRANSICION / 2))
+        },
+        popEnterTransition = {
+            fadeIn(tween(DURACION_TRANSICION))
+        },
+        popExitTransition = {
+            fadeOut(tween(DURACION_TRANSICION / 2)) +
+                    slideOutHorizontally(tween(DURACION_TRANSICION)) { ancho -> ancho / 5 }
+        }
     ) {
         composable(Screen.Home.route) {
             HomeScreen(navController = navController)
@@ -85,6 +106,13 @@ fun AppNavigation(
             }
         }
 
+        // Recurso de la asistente: foto del trabajo como evidencia de la práctica
+        composable(Screen.Camara.route) {
+            RutaProtegida(sesionUsuario, navController) {
+                CamaraScreen(navController = navController)
+            }
+        }
+
         // ---- Actividades del estudiante ----
 
         composable(Screen.Lectura.route) {
@@ -112,14 +140,6 @@ fun AppNavigation(
                     }
                 }
             )
-        }
-
-        composable(Screen.Camara.route) {
-            CamaraScreen(navController = navController)
-        }
-
-        composable(Screen.Audio.route) {
-            AudioScreen(navController = navController)
         }
     }
 }
