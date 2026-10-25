@@ -12,7 +12,7 @@ Aplicación móvil Android de apoyo y nivelación en **Lectura** y **Matemática
 | Yoximar Ruiz | `yoxi1502` | Panel docente, sesiones con código, login con perfiles, observación pedagógica, catálogo de actividades (UTP) y documentación |
 | Maximiliano Valenzuela | `maxijrr20` | Arquitectura y paquetes, tema Material 3, validación de la asignación, transiciones de navegación e historial de resultados |
 
-**Equipo N.º:** _completar_
+**Equipo N.º:** 2
 
 ## Problema que resuelve
 
@@ -109,7 +109,7 @@ Todo el contenido es ficticio. No se registran nombres, RUT, diagnósticos, ante
 
 ## Gestión del proyecto
 
-- **Planificación (Trello):** _pegar enlace aquí_
+- **Planificación (Trello):** https://trello.com/b/DEAsehxo/mpaz-neb
 - **Control de versiones:** GitHub con ramas por funcionalidad y Pull Requests.
 
 ## Próximos pasos (Evaluación Final Transversal)
