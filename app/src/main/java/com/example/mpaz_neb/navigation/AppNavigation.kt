@@ -1,5 +1,10 @@
 package com.example.mpaz_neb.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,20 +20,27 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.mpaz_neb.ui.screens.ActividadFormScreen
+import com.example.mpaz_neb.ui.screens.CatalogoScreen
+import com.example.mpaz_neb.viewmodel.ActividadFormViewModel
 import com.example.mpaz_neb.model.PerfilUsuario
 import com.example.mpaz_neb.model.UsuarioSesion
 import com.example.mpaz_neb.model.UsuarioSesionUiState
 import com.example.mpaz_neb.ui.screens.AssignActivityScreen
-import com.example.mpaz_neb.ui.screens.AudioScreen
 import com.example.mpaz_neb.ui.screens.CamaraScreen
 import com.example.mpaz_neb.ui.screens.HomeScreen
 import com.example.mpaz_neb.ui.screens.LecturaScreen
 import com.example.mpaz_neb.ui.screens.MatematicaScreen
-import com.example.mpaz_neb.ui.screens.ProgresoScreen
+// import com.example.mpaz_neb.ui.screens.ProgresoScreen
 import com.example.mpaz_neb.ui.screens.SesionEnCursoScreen
 import com.example.mpaz_neb.ui.screens.StudentCodeScreen
 import com.example.mpaz_neb.ui.screens.TeacherLoginScreen
 import com.example.mpaz_neb.viewmodel.SesionUsuarioViewModel
+import com.example.mpaz_neb.navigation.NavigationEvent
+
+private const val DURACION_TRANSICION = 320
 
 @Composable
 fun AppNavigation(
@@ -47,7 +59,22 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Home.route,
+        // Transiciones animadas entre pantallas
+        enterTransition = {
+            fadeIn(tween(DURACION_TRANSICION)) +
+                    slideInHorizontally(tween(DURACION_TRANSICION)) { ancho -> ancho / 5 }
+        },
+        exitTransition = {
+            fadeOut(tween(DURACION_TRANSICION / 2))
+        },
+        popEnterTransition = {
+            fadeIn(tween(DURACION_TRANSICION))
+        },
+        popExitTransition = {
+            fadeOut(tween(DURACION_TRANSICION / 2)) +
+                    slideOutHorizontally(tween(DURACION_TRANSICION)) { ancho -> ancho / 5 }
+        }
     ) {
         composable(Screen.Home.route) {
             HomeScreen(navController = navController)
@@ -79,9 +106,49 @@ fun AppNavigation(
             }
         }
 
+        /*
         composable(Screen.Progreso.route) {
             RutaProtegida(sesionUsuario, navController) {
                 ProgresoScreen(navController = navController)
+            }
+        }
+        */
+
+        // Recurso de la asistente: foto del trabajo como evidencia de la práctica
+        composable(Screen.Camara.route) {
+            RutaProtegida(sesionUsuario, navController) {
+                CamaraScreen(navController = navController)
+            }
+        }
+
+        // ---- Solo perfil Docente / UTP ----
+
+        composable(Screen.Catalogo.route) {
+            RutaProtegida(
+                estado = sesionUsuario,
+                navController = navController,
+                perfilesPermitidos = setOf(PerfilUsuario.DOCENTE_UTP)
+            ) {
+                CatalogoScreen(navController = navController)
+            }
+        }
+
+        composable(
+            route = Screen.ActividadForm.route,
+            arguments = listOf(
+                navArgument(ActividadFormViewModel.ARG_ID) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
+            RutaProtegida(
+                estado = sesionUsuario,
+                navController = navController,
+                perfilesPermitidos = setOf(PerfilUsuario.DOCENTE_UTP)
+            ) {
+                ActividadFormScreen(navController = navController)
             }
         }
 
@@ -106,20 +173,11 @@ fun AppNavigation(
                                 }
                             }
                         }
-
                         NavigationEvent.PopBackStack -> navController.popBackStack()
                         NavigationEvent.NavigateUp -> navController.navigateUp()
                     }
                 }
             )
-        }
-
-        composable(Screen.Camara.route) {
-            CamaraScreen(navController = navController)
-        }
-
-        composable(Screen.Audio.route) {
-            AudioScreen(navController = navController)
         }
     }
 }

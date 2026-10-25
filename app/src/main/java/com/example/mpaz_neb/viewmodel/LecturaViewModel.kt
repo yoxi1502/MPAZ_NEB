@@ -7,6 +7,7 @@ import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.LecturaUiState
 import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.PreguntaLectura
+import com.example.mpaz_neb.model.TipoPreguntaLectura
 import com.example.mpaz_neb.repository.ProgresoRepository
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import java.util.UUID
@@ -54,33 +55,40 @@ class LecturaViewModel(
                 "Antes de volver a casa, recogieron sus cosas " +
                 "y dejaron el lugar limpio."
 
+    // Una pregunta explícita, una implícita y una de vocabulario (contenido ficticio)
     private val preguntas = listOf(
         PreguntaLectura(
             enunciado = "¿Con quién fue Ana al parque?",
+            tipo = TipoPreguntaLectura.EXPLICITA,
             opciones = listOf(
                 "Con su amiga",
                 "Con su hermano Tomás",
                 "Con su mamá"
             ),
-            respuestaCorrecta = "Con su hermano Tomás"
+            respuestaCorrecta = "Con su hermano Tomás",
+            retroalimentacion = "La historia dice: «Ana fue al parque con su hermano Tomás»."
         ),
         PreguntaLectura(
-            enunciado = "¿De qué color era la pelota?",
+            enunciado = "¿Por qué crees que dejaron el lugar limpio?",
+            tipo = TipoPreguntaLectura.IMPLICITA,
             opciones = listOf(
-                "Azul",
-                "Amarilla",
-                "Roja"
+                "Porque cuidan el parque",
+                "Porque estaba lloviendo",
+                "Porque perdieron la pelota"
             ),
-            respuestaCorrecta = "Roja"
+            respuestaCorrecta = "Porque cuidan el parque",
+            retroalimentacion = "Recoger sus cosas y dejar todo limpio muestra que cuidan el parque."
         ),
         PreguntaLectura(
-            enunciado = "¿Qué hicieron antes de volver a casa?",
+            enunciado = "En la historia, ¿qué significa «recogieron»?",
+            tipo = TipoPreguntaLectura.VOCABULARIO,
             opciones = listOf(
-                "Recogieron sus cosas",
-                "Compraron otra pelota",
-                "Se fueron a dormir"
+                "Juntaron sus cosas",
+                "Botaron sus cosas",
+                "Pintaron sus cosas"
             ),
-            respuestaCorrecta = "Recogieron sus cosas"
+            respuestaCorrecta = "Juntaron sus cosas",
+            retroalimentacion = "«Recoger» es juntar las cosas para llevarlas contigo."
         )
     )
 

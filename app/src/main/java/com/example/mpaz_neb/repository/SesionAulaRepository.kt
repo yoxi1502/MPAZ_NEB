@@ -34,7 +34,8 @@ class SesionAulaRepository(context: Context) {
         modulo: ModuloActividad,
         curso: String,
         estudiante: String,
-        asistente: String
+        asistente: String,
+        contenido: String = modulo.contenido
     ): SesionAula {
         require(curso in CURSOS && estudiante in ESTUDIANTES) {
             "Selecciona un curso y un estudiante de la lista."
@@ -56,7 +57,7 @@ class SesionAulaRepository(context: Context) {
                 id = UUID.randomUUID().toString(), codigo = codigo,
                 estudiante = estudiante, asistente = asistente,
                 curso = curso, modulo = modulo,
-                contenido = modulo.contenido, estado = EstadoSesion.CREADA,
+                contenido = contenido, estado = EstadoSesion.CREADA,
                 creadaEn = System.currentTimeMillis()
             )
             escribirSesiones(preferencias, anteriores + creada)

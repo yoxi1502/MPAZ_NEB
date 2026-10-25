@@ -17,6 +17,8 @@ import androidx.navigation.NavHostController
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
 import com.example.mpaz_neb.model.UsuarioSesion
+import com.example.mpaz_neb.model.PerfilUsuario
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
 import java.text.DateFormat
@@ -24,15 +26,20 @@ import java.util.Date
 import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.viewmodel.SesionAulaViewModel
+import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.ui.graphics.vector.ImageVector
 
 @Composable
 fun AssignActivityScreen(
     navController: NavHostController,
     usuario: UsuarioSesion,
     onCerrarSesion: () -> Unit,
-    sesionViewModel: SesionAulaViewModel = obtenerViewModel()
+    sesionViewModel: SesionAulaViewModel = obtenerViewModel(),
+    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel()
 ) {
     val estado by sesionViewModel.uiState.collectAsState()
+    val preferencias by preferenciasViewModel.uiState.collectAsState()
     val sesionAbierta = estado.sesion?.estado?.let { it != EstadoSesion.FINALIZADA } == true
 
     BackHandler(enabled = estado.guardando) { }
@@ -69,6 +76,22 @@ fun AssignActivityScreen(
             }
 
             EncabezadoUsuario(usuario)
+
+            if (usuario.perfil == PerfilUsuario.DOCENTE_UTP) {
+                FilledTonalButton(
+                    onClick = {
+                        navController.navigate(Screen.Catalogo.route) { launchSingleTop = true }
+                    },
+                    enabled = !estado.guardando,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.LibraryBooks, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Catálogo de actividades")
+                }
+            }
 
             Text(
                 text = "Asignar actividad",
@@ -136,13 +159,38 @@ fun AssignActivityScreen(
                 onSeleccion = sesionViewModel::seleccionarCurso
             )
 
-            OutlinedTextField(
-                value = estado.modulo.contenido,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Contenido disponible") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            val opciones = estado.opcionesActividad
+            val seleccionada = estado.actividadSeleccionada
+            if (seleccionada != null) {
+                SelectorAsignacion(
+                    titulo = "Actividad del catálogo",
+                    valor = seleccionada.descripcionCorta,
+                    opciones = opciones.map { it.descripcionCorta },
+                    habilitado = habilitado,
+                    onSeleccion = { texto ->
+                        opciones.firstOrNull { it.descripcionCorta == texto }
+                            ?.let(sesionViewModel::seleccionarActividad)
+                    }
+                )
+                Text(
+                    text = "Objetivo: ${seleccionada.objetivo}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else if (estado.curso.isBlank()) {
+                Text(
+                    text = "Elige un curso para ver las actividades disponibles.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                Text(
+                    text = "No hay actividades disponibles para ${estado.modulo.etiqueta} " +
+                            "en ${estado.curso}. Elige otro curso o pide a UTP que publique una.",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             SelectorAsignacion(
                 titulo = "Estudiante asignado",
@@ -167,11 +215,61 @@ fun AssignActivityScreen(
                 Text(if (estado.guardando) "Guardando sesión…" else "Generar código de sesión")
             }
 
+            ApoyosDelDispositivo(
+                lecturaEnVoz = preferencias.lecturaEnVoz,
+                onLecturaEnVoz = preferenciasViewModel::cambiarLecturaEnVoz
+            )
+
             Text(
                 "Los estudiantes de la lista son alias de demostración.",
                 style = MaterialTheme.typography.bodySmall
             )
         }
+    }
+}
+
+/** Interruptor para activar o desactivar la lectura en voz alta en este dispositivo. */
+@Composable
+private fun ApoyosDelDispositivo(
+    lecturaEnVoz: Boolean,
+    onLecturaEnVoz: (Boolean) -> Unit
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Apoyos para el estudiante", fontWeight = FontWeight.Bold)
+            FilaInterruptor(
+                icono = Icons.AutoMirrored.Filled.VolumeUp,
+                titulo = "Lectura en voz alta",
+                descripcion = "Botón para escuchar textos y preguntas.",
+                activo = lecturaEnVoz,
+                onCambio = onLecturaEnVoz
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilaInterruptor(
+    icono: ImageVector,
+    titulo: String,
+    descripcion: String,
+    activo: Boolean,
+    onCambio: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(icono, contentDescription = null)
+        Column(Modifier.weight(1f)) {
+            Text(titulo)
+            Text(descripcion, style = MaterialTheme.typography.bodyMedium)
+        }
+        Switch(checked = activo, onCheckedChange = onCambio)
     }
 }
 

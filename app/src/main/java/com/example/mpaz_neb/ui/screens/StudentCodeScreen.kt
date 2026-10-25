@@ -10,9 +10,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -37,15 +36,6 @@ import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.viewmodel.StudentCodeViewModel
 
 
-private data class OpcionActividadCodigo(
-    val titulo: String,
-    val descripcion: String,
-    val icono: ImageVector,
-    val fondo: Color,
-    val color: Color,
-    val destino: Screen
-)
-
 @Composable
 fun StudentCodeScreen(
     navController: NavController,
@@ -59,30 +49,11 @@ fun StudentCodeScreen(
         if (estado.errorCodigo != null) scrollState.animateScrollTo(0)
     }
 
-    val actividades = listOf(
-        OpcionActividadCodigo(
-            titulo = "Tomar foto",
-            descripcion = "Mostrar mi trabajo",
-            icono = Icons.Default.CameraAlt,
-            fondo = VerdeClaro,
-            color = VerdeLogro,
-            destino = Screen.Camara
-        ),
-        OpcionActividadCodigo(
-            titulo = "Mi voz",
-            descripcion = "Grabar y escuchar",
-            icono = Icons.Default.Mic,
-            fondo = RojoClaro,
-            color = RojoSuave,
-            destino = Screen.Audio
-        )
-    )
-
-    // El estudiante solo entra a la actividad asignada en su sesión
-    fun abrirActividad(destino: Screen? = null) {
+    // El estudiante solo puede entrar a la actividad que le asignaron en su sesión
+    fun abrirActividad() {
         studentCodeViewModel.validarCodigo { sesion ->
             focusManager.clearFocus()
-            val ruta = destino?.route ?: when (sesion.modulo) {
+            val ruta = when (sesion.modulo) {
                 ModuloActividad.LECTURA -> Screen.Lectura.route
                 ModuloActividad.MATEMATICA -> Screen.Matematica.route
             }
@@ -94,13 +65,12 @@ fun StudentCodeScreen(
         modifier = Modifier.fillMaxSize(),
         color = FondoCalido
     ) {
-        BoxWithConstraints(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
                 .imePadding()
         ) {
-            val columnas = if (maxWidth >= 760.dp) 4 else 2
 
             Column(
                 modifier = Modifier
@@ -253,40 +223,7 @@ fun StudentCodeScreen(
                     Text(if (estado.validando) "Comprobando…" else "Comenzar actividad asignada")
                 }
 
-                Text(
-                    text = "¿Qué vamos a hacer hoy?",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextoPrincipal,
-                    textAlign = TextAlign.Center
-                )
-
-                Column(
-                    modifier = Modifier
-                        .widthIn(
-                            max = if (columnas == 4) 1000.dp else 560.dp
-                        )
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    actividades.chunked(columnas).forEach { fila ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            fila.forEach { actividad ->
-                                TarjetaActividadCodigo(
-                                    actividad = actividad,
-                                    enabled = !estado.validando,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = {
-                                        abrirActividad(actividad.destino)
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
+                PasosEstudiante()
 
                 Text(
                     text = "¿No tienes código? Pídeselo a tu profesora o asistente.",
@@ -308,50 +245,40 @@ fun StudentCodeScreen(
 }
 
 @Composable
-private fun TarjetaActividadCodigo(
-    actividad: OpcionActividadCodigo,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.heightIn(min = 154.dp),
-        shape = RoundedCornerShape(22.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = actividad.fondo,
-            contentColor = actividad.color
-        ),
-        contentPadding = PaddingValues(
-            horizontal = 10.dp,
-            vertical = 20.dp
-        )
+private fun PasosEstudiante() {
+    val pasos = listOf(
+        Triple(Icons.Default.VpnKey, AzulClaro, "Escribe tu código"),
+        Triple(Icons.AutoMirrored.Filled.VolumeUp, VerdeClaro, "Escucha la historia o la pregunta"),
+        Triple(Icons.Default.TouchApp, NaranjaClaro, "Elige y comprueba tu respuesta")
+    )
+    Column(
+        modifier = Modifier
+            .widthIn(max = 500.dp)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Icon(
-                imageVector = actividad.icono,
-                contentDescription = null,
-                modifier = Modifier.size(36.dp)
-            )
-
-            Text(
-                text = actividad.titulo,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = actividad.descripcion,
-                fontSize = 12.sp,
-                lineHeight = 17.sp,
-                textAlign = TextAlign.Center
-            )
+        Text(
+            text = "¿Cómo funciona?",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextoPrincipal
+        )
+        pasos.forEachIndexed { indice, (icono, fondo, texto) ->
+            Surface(
+                shape = RoundedCornerShape(18.dp),
+                color = fondo,
+                contentColor = TextoPrincipal,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(icono, contentDescription = null, modifier = Modifier.size(28.dp))
+                    Text("${indice + 1}. $texto", fontSize = 17.sp)
+                }
+            }
         }
     }
 }

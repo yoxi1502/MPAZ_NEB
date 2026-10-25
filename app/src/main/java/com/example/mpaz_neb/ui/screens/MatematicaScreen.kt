@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,6 +34,18 @@ import androidx.navigation.NavHostController
 import com.example.mpaz_neb.model.MatematicaUiState
 import com.example.mpaz_neb.navigation.NavigationEvent
 import com.example.mpaz_neb.viewmodel.MatematicaViewModel
+import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
+import com.example.mpaz_neb.nativo.LectorVoz
+import com.example.mpaz_neb.ui.components.BotonEscuchar
+import com.example.mpaz_neb.ui.components.ContadorAnimado
+import com.example.mpaz_neb.ui.components.EstrellaLogro
+import com.example.mpaz_neb.ui.components.rememberLectorVoz
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,9 +53,20 @@ import com.example.mpaz_neb.viewmodel.MatematicaViewModel
 fun MatematicaScreen(
     navController: NavHostController,
     onNavigate: (NavigationEvent) -> Unit,
-    matematicaViewModel: MatematicaViewModel = obtenerViewModel()
+    matematicaViewModel: MatematicaViewModel = obtenerViewModel(),
+    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel()
 ) {
     val estado by matematicaViewModel.uiState.collectAsState()
+    val preferencias by preferenciasViewModel.uiState.collectAsState()
+
+    // Recurso nativo: texto a voz
+    val lector = rememberLectorVoz()
+
+    var confirmarEnvio by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(estado.indiceActual, estado.finalizada) {
+        lector.detener()
+    }
 
     var actividadIniciada by rememberSaveable {
         mutableStateOf(false)
@@ -127,7 +149,12 @@ fun MatematicaScreen(
                     ) {
                         Button(
                             onClick = {
-                                if (estado.respuestaComprobada) {
+                                if (
+                                    estado.respuestaComprobada &&
+                                    estado.indiceActual == estado.preguntas.lastIndex
+                                ) {
+                                    confirmarEnvio = true
+                                } else if (estado.respuestaComprobada) {
                                     matematicaViewModel.siguientePregunta()
                                 } else {
                                     matematicaViewModel.comprobarRespuesta()
@@ -211,12 +238,32 @@ fun MatematicaScreen(
                     else -> {
                         PreguntaMatematicaPanel(
                             estado = estado,
+                            lector = if (preferencias.lecturaEnVoz) lector else null,
                             onSeleccionar = matematicaViewModel::seleccionarRespuesta
                         )
                     }
                 }
             }
         }
+    }
+
+    // Confirmación antes de enviar las respuestas
+    if (confirmarEnvio) {
+        AlertDialog(
+            onDismissRequest = { confirmarEnvio = false },
+            icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
+            title = { Text("¿Terminaste?") },
+            text = { Text("Vamos a guardar tus respuestas para que tu profesora pueda verlas.") },
+            confirmButton = {
+                Button(onClick = {
+                    confirmarEnvio = false
+                    matematicaViewModel.siguientePregunta()
+                }) { Text("Sí, enviar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmarEnvio = false }) { Text("Todavía no") }
+            }
+        )
     }
 }
 
@@ -316,6 +363,7 @@ private fun InicioMatematica(
 @Composable
 private fun PreguntaMatematicaPanel(
     estado: MatematicaUiState,
+    lector: LectorVoz?,
     onSeleccionar: (Int) -> Unit
 ) {
     val pregunta = estado.preguntas
@@ -350,36 +398,58 @@ private fun PreguntaMatematicaPanel(
             trackColor = BordeMorado
         )
 
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = MoradoClaro,
-            contentColor = TextoPrincipal
-        ) {
-            Column(
-                modifier = Modifier.padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+        // El ejercicio entra deslizándose cada vez que cambia
+        AnimatedContent(
+            targetState = estado.indiceActual,
+            transitionSpec = {
+                (slideInHorizontally { ancho -> ancho / 2 } + fadeIn()) togetherWith
+                        (slideOutHorizontally { ancho -> -ancho / 2 } + fadeOut())
+            },
+            label = "Cambio de ejercicio"
+        ) { indice ->
+            val ejercicio = estado.preguntas.getOrNull(indice) ?: pregunta
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = MoradoClaro,
+                contentColor = TextoPrincipal
             ) {
-                Icon(
-                    imageVector = Icons.Default.Calculate,
-                    contentDescription = null,
-                    tint = MoradoMatematica
-                )
+                Column(
+                    modifier = Modifier.padding(28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Calculate,
+                        contentDescription = null,
+                        tint = MoradoMatematica
+                    )
 
-                Text(
-                    text = pregunta.enunciado,
-                    fontSize = 32.sp,
-                    lineHeight = 40.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center
-                )
+                    Text(
+                        text = ejercicio.enunciado,
+                        fontSize = 32.sp,
+                        lineHeight = 40.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center
+                    )
 
-                Text(
-                    text = "Puedes contar con tus dedos si lo necesitas.",
-                    textAlign = TextAlign.Center
-                )
+                    Text(
+                        text = "Puedes contar con tus dedos si lo necesitas.",
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
+        }
+
+        if (lector != null) {
+            BotonEscuchar(
+                texto = pregunta.enunciado.replace("-", " menos ") +
+                        " Las opciones son: " + pregunta.opciones.joinToString(", "),
+                lector = lector,
+                color = MoradoMatematica,
+                etiqueta = "Escuchar el ejercicio",
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         Text(
@@ -514,9 +584,10 @@ private fun PreguntaMatematicaPanel(
             ) {
                 Text(
                     text = if (correcta) {
-                        "¡Muy bien! Encontraste la respuesta."
+                        "¡Muy bien! ${pregunta.procedimiento}"
                     } else {
-                        "Sigamos aprendiendo. La respuesta es ${pregunta.respuestaCorrecta}."
+                        "¡Buen intento! La respuesta es ${pregunta.respuestaCorrecta}. " +
+                                pregunta.procedimiento
                     },
                     modifier = Modifier.padding(18.dp),
                     fontSize = 18.sp,
@@ -547,12 +618,7 @@ private fun ResultadoMatematica(
     onRepetir: () -> Unit,
     onVolver: () -> Unit
 ) {
-    Icon(
-        imageVector = Icons.Default.Star,
-        contentDescription = null,
-        tint = Dorado,
-        modifier = Modifier.size(80.dp)
-    )
+    EstrellaLogro()
 
     Text(
         text = "¡Terminaste tu desafío!",
@@ -579,10 +645,16 @@ private fun ResultadoMatematica(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            ContadorAnimado(
+                valor = estado.aciertos,
+                total = estado.preguntas.size,
+                color = VerdeLogro
+            )
+
             Text(
-                text = "${estado.aciertos} de ${estado.preguntas.size}",
-                fontSize = 36.sp,
-                fontWeight = FontWeight.ExtraBold,
+                text = "de ${estado.preguntas.size}",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
                 color = VerdeLogro
             )
 

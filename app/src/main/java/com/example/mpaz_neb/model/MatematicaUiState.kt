@@ -3,7 +3,8 @@ package com.example.mpaz_neb.model
 data class PreguntaMatematica(
     val enunciado: String,
     val opciones: List<Int>,
-    val respuestaCorrecta: Int
+    val respuestaCorrecta: Int,
+    val procedimiento: String
 )
 
 data class MatematicaUiState(
