@@ -42,6 +42,8 @@ import com.example.mpaz_neb.navigation.NavigationEvent
 
 private const val DURACION_TRANSICION = 320
 
+private const val DURACION_TRANSICION = 320
+
 @Composable
 fun AppNavigation(
     navController: NavHostController,
@@ -149,6 +151,13 @@ fun AppNavigation(
                 perfilesPermitidos = setOf(PerfilUsuario.DOCENTE_UTP)
             ) {
                 ActividadFormScreen(navController = navController)
+            }
+        }
+
+        // Recurso de la asistente: foto del trabajo como evidencia de la práctica
+        composable(Screen.Camara.route) {
+            RutaProtegida(sesionUsuario, navController) {
+                CamaraScreen(navController = navController)
             }
         }
 
