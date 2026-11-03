@@ -3,6 +3,9 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Permiso necesario para hacer peticiones HTTP a la API REST -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Necesario desde Android 11 para encontrar el motor de texto a voz del sistema -->
     <queries>
         <intent>
