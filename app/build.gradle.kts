@@ -56,6 +56,10 @@ dependencies {
     // Persistencia local
     implementation(libs.androidx.datastore.preferences)
 
+    // Consumo de API REST (Retrofit + conversor JSON Gson)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+
     // Cámara (CameraX)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
