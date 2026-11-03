@@ -58,6 +58,23 @@ La app es una herramienta de apoyo: **no diagnostica, no califica oficialmente y
 
 La cámara **no aparece en el flujo del estudiante**: es una herramienta de la asistente, que se usa bajo supervisión y sin fotografiar rostros ni datos personales.
 
+## Consumo de API REST (Guía 14)
+
+El panel de la asistente y de la UTP tiene el botón **Comunicados del equipo (API REST)**, que consume la API pública de prueba [JSONPlaceholder](https://jsonplaceholder.typicode.com) con **Retrofit 2.11** y el conversor **Gson**.
+
+| Método | Endpoint | Uso en la app |
+|---|---|---|
+| `GET` | `/posts?userId=1` | Lista los comunicados al abrir la pantalla (y con el botón *Actualizar*) |
+| `POST` | `/posts` | Publica un comunicado nuevo desde el formulario |
+| `PUT` | `/posts/{id}` | Guarda los cambios al editar un comunicado |
+| `DELETE` | `/posts/{id}` | Elimina un comunicado, previa confirmación |
+
+- **Capas:** `data/model/Post` → `data/remote/ApiService` (interfaz con `@GET`, `@POST`, `@PUT`, `@DELETE`) → `data/remote/RetrofitInstance` (singleton con la URL base) → `repository/PostRepository` → `viewmodel/PostViewModel` (`StateFlow` + `viewModelScope`) → `ui/screens/PostScreen`.
+- Las peticiones son funciones `suspend`, así que corren en corrutinas sin bloquear la interfaz. Mientras cargan se muestra un indicador, y si no hay internet aparece un mensaje con *Reintentar*.
+- El formulario se valida con `Validadores` (título de 5 a 60 caracteres, contenido de 10 a 300 y sin RUT).
+- JSONPlaceholder **responde, pero no guarda los cambios**. Por eso el ViewModel actualiza la lista local con la respuesta del servidor. Los comunicados creados en la app reciben un id local, porque el servidor siempre responde `id 101`.
+- Requiere el permiso `INTERNET` en `AndroidManifest.xml`.
+
 ## Arquitectura
 
 Patrón **MVVM** con Jetpack Compose y Material 3.
@@ -66,7 +83,8 @@ Patrón **MVVM** con Jetpack Compose y Material 3.
 app/src/main/java/com/example/mpaz_neb/
 ├── model/        Estados de UI (UiState) y modelos de datos
 ├── viewmodel/    Lógica de presentación; exponen StateFlow a las pantallas
-├── repository/   Acceso a persistencia local (DataStore)
+├── data/         Modelo Post y capa remota (ApiService, RetrofitInstance)
+├── repository/   Acceso a datos: DataStore local y API REST (PostRepository)
 ├── validacion/   Reglas de validación centralizadas (funciones puras, con pruebas unitarias)
 ├── nativo/       Recurso nativo: LectorVoz (texto a voz)
 ├── navigation/   Rutas (Screen) y NavHost con rutas protegidas
@@ -105,7 +123,7 @@ app/src/main/java/com/example/mpaz_neb/
 
 ## Datos y privacidad
 
-Todo el contenido es ficticio. No se registran nombres, RUT, diagnósticos, antecedentes PIE ni calificaciones reales; el formulario de observación rechaza textos con forma de RUT. Los datos se guardan solo en el dispositivo.
+Todo el contenido es ficticio. No se registran nombres, RUT, diagnósticos, antecedentes PIE ni calificaciones reales; el formulario de observación rechaza textos con forma de RUT. Los datos de la app se guardan solo en el dispositivo. La pantalla de comunicados solo envía textos de prueba a JSONPlaceholder, que no los almacena.
 
 ## Gestión del proyecto
 
