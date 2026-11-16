@@ -11,6 +11,7 @@ sealed class Screen(val route: String) {
     object Progreso : Screen("progreso")
     object Camara : Screen("camara")
     object Catalogo : Screen("catalogo")
+    object Comunicados : Screen("comunicados")
 
     /** Formulario de actividad: sin id crea una nueva, con id la edita. */
     object ActividadForm : Screen("actividad_form?id={id}") {

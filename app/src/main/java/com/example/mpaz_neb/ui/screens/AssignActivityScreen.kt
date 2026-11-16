@@ -21,6 +21,7 @@ import com.example.mpaz_neb.model.PerfilUsuario
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Campaign
 import java.text.DateFormat
 import java.util.Date
 import com.example.mpaz_neb.navigation.Screen
@@ -76,6 +77,20 @@ fun AssignActivityScreen(
             }
 
             EncabezadoUsuario(usuario)
+
+            OutlinedButton(
+                onClick = {
+                    navController.navigate(Screen.Comunicados.route) { launchSingleTop = true }
+                },
+                enabled = !estado.guardando,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp)
+            ) {
+                Icon(Icons.Default.Campaign, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Comunicados del equipo (API REST)")
+            }
 
             if (usuario.perfil == PerfilUsuario.DOCENTE_UTP) {
                 FilledTonalButton(
