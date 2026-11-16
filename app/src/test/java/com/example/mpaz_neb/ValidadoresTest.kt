@@ -36,4 +36,13 @@ class ValidadoresTest {
         assertNotNull(Validadores.validarObservacion("El estudiante 12.345.678-9 avanzó bien"))
         assertNull(Validadores.validarObservacion("Necesitó apoyo para ubicar la idea principal."))
     }
+
+    @Test
+    fun comunicadoValidaTituloYContenido() {
+        assertNotNull(Validadores.validarTituloComunicado("Hola"))
+        assertNull(Validadores.validarTituloComunicado("Reunión de apoderados"))
+        assertNotNull(Validadores.validarCuerpoComunicado("Corto"))
+        assertNotNull(Validadores.validarCuerpoComunicado("Avisar a la familia del RUT 12345678-K"))
+        assertNull(Validadores.validarCuerpoComunicado("El jueves se practica lectura en la biblioteca."))
+    }
 }
