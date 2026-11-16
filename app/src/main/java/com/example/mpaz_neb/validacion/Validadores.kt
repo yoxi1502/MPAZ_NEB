@@ -110,4 +110,30 @@ object Validadores {
             else -> null
         }
     }
+
+    // ---- Comunicados enviados a la API REST ----
+
+    const val TITULO_POST_MIN = 5
+    const val CUERPO_POST_MIN = 10
+
+    fun validarTituloComunicado(titulo: String): String? {
+        val limpio = titulo.trim()
+        return when {
+            limpio.isBlank() -> "Escribe el título del comunicado."
+            limpio.length < TITULO_POST_MIN -> "El título debe tener al menos $TITULO_POST_MIN caracteres."
+            limpio.length > NOMBRE_MAX -> "Máximo $NOMBRE_MAX caracteres."
+            else -> null
+        }
+    }
+
+    fun validarCuerpoComunicado(cuerpo: String): String? {
+        val limpio = cuerpo.trim()
+        return when {
+            limpio.isBlank() -> "Escribe el contenido del comunicado."
+            limpio.length < CUERPO_POST_MIN -> "Escribe al menos $CUERPO_POST_MIN caracteres."
+            limpio.length > TEXTO_LARGO_MAX -> "Máximo $TEXTO_LARGO_MAX caracteres."
+            REGEX_RUT.containsMatchIn(limpio) -> "No incluyas RUT ni otros datos personales reales."
+            else -> null
+        }
+    }
 }
