@@ -24,6 +24,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.mpaz_neb.ui.screens.ActividadFormScreen
 import com.example.mpaz_neb.ui.screens.CatalogoScreen
+import com.example.mpaz_neb.ui.screens.PostScreen
 import com.example.mpaz_neb.viewmodel.ActividadFormViewModel
 import com.example.mpaz_neb.model.PerfilUsuario
 import com.example.mpaz_neb.model.UsuarioSesion
@@ -115,6 +116,13 @@ fun AppNavigation(
         composable(Screen.Camara.route) {
             RutaProtegida(sesionUsuario, navController) {
                 CamaraScreen(navController = navController)
+            }
+        }
+
+        // Comunicados del equipo desde la API REST (cualquier perfil del equipo)
+        composable(Screen.Comunicados.route) {
+            RutaProtegida(sesionUsuario, navController) {
+                PostScreen(navController = navController)
             }
         }
 
