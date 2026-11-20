@@ -1,0 +1,6 @@
+.gradle/
+build/
+.idea/
+*.iml
+# Base de datos H2 local (se crea al encender el microservicio)
+data/
