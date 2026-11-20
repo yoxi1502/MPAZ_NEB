@@ -32,8 +32,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
 import com.example.mpaz_neb.model.LecturaUiState
+import com.example.mpaz_neb.model.PremioPokemonUiState
 import com.example.mpaz_neb.viewmodel.LecturaViewModel
 import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
+import com.example.mpaz_neb.viewmodel.PremioPokemonViewModel
+import com.example.mpaz_neb.ui.components.PremioPokemon
 import com.example.mpaz_neb.nativo.LectorVoz
 import com.example.mpaz_neb.ui.components.BotonEscuchar
 import com.example.mpaz_neb.ui.components.ContadorAnimado
@@ -52,10 +55,12 @@ import androidx.compose.animation.togetherWith
 fun LecturaScreen(
     navController: NavController,
     lecturaViewModel: LecturaViewModel = obtenerViewModel(),
-    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel()
+    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel(),
+    premioViewModel: PremioPokemonViewModel = obtenerViewModel()
 ) {
     val estado by lecturaViewModel.uiState.collectAsState()
     val preferencias by preferenciasViewModel.uiState.collectAsState()
+    val premio by premioViewModel.uiState.collectAsState()
 
     // Recurso nativo: texto a voz
     val lector = rememberLectorVoz()
@@ -154,9 +159,17 @@ fun LecturaScreen(
                     }
 
                     estado.finalizada -> {
+                        // API externa: al terminar se pide el Pokémon compañero
+                        LaunchedEffect(Unit) { premioViewModel.cargarPremio() }
+
                         ResultadoLectura(
                             estado = estado,
-                            onRepetir = lecturaViewModel::reiniciarActividad,
+                            premio = premio,
+                            onReintentarPremio = premioViewModel::reintentar,
+                            onRepetir = {
+                                premioViewModel.reiniciar()
+                                lecturaViewModel.reiniciarActividad()
+                            },
                             onVolver = {
                                 actividadIniciada = false
                             }
@@ -660,6 +673,8 @@ private fun PreguntaLecturaPanel(
 @Composable
 private fun ResultadoLectura(
     estado: LecturaUiState,
+    premio: PremioPokemonUiState,
+    onReintentarPremio: () -> Unit,
     onRepetir: () -> Unit,
     onVolver: () -> Unit
 ) {
@@ -722,6 +737,13 @@ private fun ResultadoLectura(
                 )
             }
         }
+
+        PremioPokemon(
+            estado = premio,
+            aciertos = estado.aciertos,
+            total = estado.preguntas.size,
+            onReintentar = onReintentarPremio
+        )
 
         Button(
             onClick = onRepetir,
