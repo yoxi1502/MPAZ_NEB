@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# APK que genera Android Studio (la versión entregada se copia a apk/)
+/app/release/
