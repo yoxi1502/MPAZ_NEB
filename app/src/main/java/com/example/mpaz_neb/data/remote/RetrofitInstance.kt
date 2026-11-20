@@ -24,6 +24,7 @@ object RetrofitInstance {
     private val HOST = BuildConfig.HOST_SERVIDOR
     val URL_ACTIVIDADES = "http://$HOST:8081/"
     val URL_SESIONES = "http://$HOST:8082/"
+    val URL_USUARIOS = "http://$HOST:8083/"
 
     /** Cliente HTTP compartido: tiempos de espera y registro de las peticiones en Logcat. */
     private val clienteHttp: OkHttpClient by lazy {
@@ -64,5 +65,9 @@ object RetrofitInstance {
 
     val sesionesApi: SesionesApi by lazy {
         crearRetrofit(URL_SESIONES).create(SesionesApi::class.java)
+    }
+
+    val usuariosApi: UsuariosApi by lazy {
+        crearRetrofit(URL_USUARIOS).create(UsuariosApi::class.java)
     }
 }

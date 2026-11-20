@@ -28,14 +28,20 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavController
+import com.example.mpaz_neb.model.PerfilUsuario
 import com.example.mpaz_neb.navigation.Screen
-import com.example.mpaz_neb.repository.UsuarioRepository
 import com.example.mpaz_neb.viewmodel.TeacherLoginViewModel
+
+/** Cuentas ficticias que ms-usuarios crea al encenderse por primera vez (solo para la demostración). */
+private val CUENTAS_DEMOSTRACION = listOf(
+    PerfilUsuario.ASISTENTE to "asistente@mpaz.cl / Asistente123",
+    PerfilUsuario.DOCENTE_UTP to "utp@mpaz.cl / Docente123"
+)
 
 @Composable
 fun TeacherLoginScreen(
     navController: NavController,
-    teacherLoginViewModel: TeacherLoginViewModel = obtenerViewModel()
+    teacherLoginViewModel: TeacherLoginViewModel = obtenerViewModel(factory = TeacherLoginViewModel.Factory)
 ) {
     val estado by teacherLoginViewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -228,9 +234,9 @@ private fun CuentasDePrueba() {
                 Icon(Icons.Default.Info, contentDescription = null)
                 Text("Cuentas de prueba (ficticias)", fontWeight = FontWeight.Bold)
             }
-            UsuarioRepository.CUENTAS_PRUEBA.forEach { cuenta ->
+            CUENTAS_DEMOSTRACION.forEach { (perfil, credenciales) ->
                 Text(
-                    text = "${cuenta.perfil.etiqueta}: ${cuenta.correo} / ${cuenta.clave}",
+                    text = "${perfil.etiqueta}: $credenciales",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

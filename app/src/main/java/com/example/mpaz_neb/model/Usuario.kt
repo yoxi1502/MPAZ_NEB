@@ -6,19 +6,12 @@ enum class PerfilUsuario(val etiqueta: String) {
     DOCENTE_UTP("Docente / UTP")
 }
 
-/** Cuenta de prueba ficticia (no contiene datos personales reales). */
-data class CuentaPrueba(
-    val id: String,
-    val alias: String,
-    val correo: String,
-    val clave: String,
-    val perfil: PerfilUsuario,
-    val activa: Boolean = true
-)
-
-/** Usuario con sesión iniciada en el dispositivo. */
+/**
+ * Usuario con sesión iniciada en el dispositivo.
+ * Lo entrega ms-usuarios al hacer login (sin la contraseña) y se recuerda en DataStore.
+ */
 data class UsuarioSesion(
-    val id: String,
+    val id: Long,
     val alias: String,
     val perfil: PerfilUsuario,
     val ultimoAcceso: Long

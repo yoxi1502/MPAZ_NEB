@@ -1,8 +1,11 @@
 package com.example.mpaz_neb.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.mpaz_neb.data.local.UsuarioSesionStore
 import com.example.mpaz_neb.model.UsuarioSesionUiState
 import com.example.mpaz_neb.repository.UsuarioRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,10 +19,8 @@ import kotlinx.coroutines.launch
  * Expone qué usuario del equipo pedagógico tiene la sesión abierta.
  */
 class SesionUsuarioViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository = UsuarioRepository(application)
+    private val repository: UsuarioRepository
+) : ViewModel() {
 
     val uiState: StateFlow<UsuarioSesionUiState> =
         repository.usuarioActual
@@ -33,6 +34,15 @@ class SesionUsuarioViewModel(
     fun cerrarSesion() {
         viewModelScope.launch {
             repository.cerrarSesion()
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val aplicacion = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                SesionUsuarioViewModel(UsuarioRepository(UsuarioSesionStore(aplicacion)))
+            }
         }
     }
 }
