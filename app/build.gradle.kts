@@ -17,6 +17,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // IP del computador donde corren los microservicios.
+        // 10.0.2.2 es el "localhost" del PC visto desde el emulador de Android.
+        // Para un celular físico: agregar mpaz.servidor.host=<IP del PC> en gradle.properties.
+        val hostServidor = providers.gradleProperty("mpaz.servidor.host").getOrElse("10.0.2.2")
+        buildConfigField("String", "HOST_SERVIDOR", "\"$hostServidor\"")
     }
 
     buildTypes {
@@ -32,6 +38,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -59,6 +66,8 @@ dependencies {
     // Consumo de API REST (Retrofit + conversor JSON Gson)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
+    // Muestra en Logcat cada petición y respuesta HTTP (útil para la demostración)
+    implementation(libs.okhttp.logging)
 
     // Cámara (CameraX)
     implementation(libs.androidx.camera.core)
