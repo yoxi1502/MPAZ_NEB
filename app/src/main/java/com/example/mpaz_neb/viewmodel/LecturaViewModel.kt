@@ -1,8 +1,11 @@
 package com.example.mpaz_neb.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.mpaz_neb.data.local.SesionDispositivoStore
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.LecturaUiState
 import com.example.mpaz_neb.model.ModuloActividad
@@ -12,38 +15,23 @@ import com.example.mpaz_neb.repository.ProgresoRepository
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Actividad de lectura del estudiante. Al terminar guarda el último resultado en el
+ * dispositivo y, si hay una sesión de Lectura abierta, lo envía a ms-sesiones.
+ */
 class LecturaViewModel(
-    application: Application
-) : AndroidViewModel(application) {
+    private val progresoRepository: ProgresoRepository,
+    private val sesionRepository: SesionAulaRepository
+) : ViewModel() {
 
-    private val repository = ProgresoRepository(application)
-
-    private val sesionRepository =
-        SesionAulaRepository(application)
-
+    // Id del intento: si se reintenta el envío, el servidor no duplica el resultado
     private var intentoId = UUID.randomUUID().toString()
-
-    private var contextoSesion = cargarSesionLectura()
-
-    private fun cargarSesionLectura() = viewModelScope.async {
-        val sesion = sesionRepository.sesionActual.first()
-
-        sesion?.takeIf {
-            it.modulo == ModuloActividad.LECTURA &&
-                    (
-                            it.estado == EstadoSesion.EN_CURSO ||
-                                    it.estado == EstadoSesion.COMPLETADA
-                            )
-        }?.id
-    }
 
     private val titulo = "Una tarde en el parque"
 
@@ -189,23 +177,29 @@ class LecturaViewModel(
             )
         }
 
-        val contextoDelIntento = contextoSesion
         val idDelIntento = intentoId
 
         viewModelScope.launch {
             try {
-                repository.guardarLectura(
-                    aciertos = estado.aciertos,
-                    total = estado.preguntas.size,
-                    sesionId = contextoDelIntento.await(),
-                    intentoId = idDelIntento
-                )
+                val total = estado.preguntas.size
+                progresoRepository.guardarLectura(aciertos = estado.aciertos, total = total)
+
+                // Solo se envía si la sesión abierta en el dispositivo es de Lectura
+                val sesionId = sesionRepository.obtenerSesionActual()
+                    ?.takeIf {
+                        it.modulo == ModuloActividad.LECTURA &&
+                                (it.estado == EstadoSesion.EN_CURSO || it.estado == EstadoSesion.COMPLETADA)
+                    }?.id
+                if (sesionId != null) {
+                    sesionRepository.registrarResultado(sesionId, idDelIntento, estado.aciertos, total)
+                }
 
                 _uiState.update { actual ->
                     actual.copy(
                         finalizada = true,
                         guardando = false,
-                        errorGuardado = null
+                        errorGuardado = null,
+                        enviadoAlServidor = sesionId != null
                     )
                 }
             } catch (cancelacion: CancellationException) {
@@ -227,8 +221,20 @@ class LecturaViewModel(
         }
 
         intentoId = UUID.randomUUID().toString()
-        contextoSesion = cargarSesionLectura()
 
         _uiState.value = crearEstadoInicial()
+    }
+
+    companion object {
+        /** Entrega al ViewModel sus repositorios (necesitan el Context para DataStore). */
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val aplicacion = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                LecturaViewModel(
+                    progresoRepository = ProgresoRepository(aplicacion),
+                    sesionRepository = SesionAulaRepository(SesionDispositivoStore(aplicacion))
+                )
+            }
+        }
     }
 }

@@ -1,14 +1,17 @@
 package com.example.mpaz_neb.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.mpaz_neb.model.ModuloActividad
-import com.example.mpaz_neb.model.SesionAulaUiState
-import com.example.mpaz_neb.repository.SesionAulaRepository
-import com.example.mpaz_neb.repository.ActividadRepository
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.mpaz_neb.data.local.SesionDispositivoStore
 import com.example.mpaz_neb.model.Actividad
 import com.example.mpaz_neb.model.EstadoActividad
+import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.SesionAulaUiState
+import com.example.mpaz_neb.repository.ActividadRepository
+import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.validacion.Validadores
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -18,12 +21,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Panel de la asistente: asigna una actividad (crea la sesión en ms-sesiones),
+ * acompaña la sesión, guarda la observación y la finaliza.
+ */
 class SesionAulaViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository = SesionAulaRepository(application)
-    private val actividadRepository = ActividadRepository()
+    private val repository: SesionAulaRepository,
+    private val actividadRepository: ActividadRepository = ActividadRepository()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SesionAulaUiState())
     val uiState: StateFlow<SesionAulaUiState> = _uiState.asStateFlow()
@@ -31,7 +36,6 @@ class SesionAulaViewModel(
     private var cargarJob: Job? = null
 
     init {
-        cargarSesion()
         cargarActividades()
     }
 
@@ -51,34 +55,33 @@ class SesionAulaViewModel(
         }
     }
 
+    /**
+     * GET a ms-sesiones de la sesión abierta en este dispositivo.
+     * La pantalla lo llama al abrirse y con el botón Actualizar.
+     */
     fun cargarSesion() {
         cargarJob?.cancel()
         cargarJob = viewModelScope.launch {
             _uiState.update { it.copy(cargando = true, error = null) }
             try {
-                repository.sesionActual.collect { sesion ->
-                    _uiState.update { actual ->
-                        actual.copy(
-                            sesion = sesion,
-                            cargando = false,
-                            error = null,
-                            // Si la asistente no está escribiendo, se muestra lo guardado
-                            observacion = if (actual.observacionEditada) {
-                                actual.observacion
-                            } else {
-                                sesion?.observacion.orEmpty()
-                            }
-                        )
-                    }
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
+                val sesion = repository.obtenerSesionActual()
                 _uiState.update { actual ->
                     actual.copy(
+                        sesion = sesion,
                         cargando = false,
-                        error = e.message ?: "Error al cargar la sesión."
+                        // Si la asistente no está escribiendo, se muestra lo guardado
+                        observacion = if (actual.observacionEditada) {
+                            actual.observacion
+                        } else {
+                            sesion?.observacion.orEmpty()
+                        }
                     )
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(cargando = false, error = e.message ?: "Error al cargar la sesión.")
                 }
             }
         }
@@ -130,7 +133,7 @@ class SesionAulaViewModel(
         }
     }
 
-    /** Valida la observación pedagógica y la guarda en la sesión actual. */
+    /** Valida la observación pedagógica y la envía con PATCH a la sesión actual. */
     fun guardarObservacion() {
         val estado = _uiState.value
         val sesionId = estado.sesion?.id ?: return
@@ -145,10 +148,11 @@ class SesionAulaViewModel(
         _uiState.update { it.copy(guardandoObservacion = true, errorObservacion = null) }
         viewModelScope.launch {
             try {
-                repository.guardarObservacion(sesionId, estado.observacion)
+                val actualizada = repository.guardarObservacion(sesionId, estado.observacion)
                 _uiState.update {
                     it.copy(
-                        observacion = estado.observacion.trim(),
+                        sesion = actualizada,
+                        observacion = actualizada.observacion,
                         guardandoObservacion = false,
                         observacionEditada = false,
                         observacionGuardada = true
@@ -167,6 +171,7 @@ class SesionAulaViewModel(
         }
     }
 
+    /** POST: crea la sesión en el servidor, que genera el código MPAZ-XXXXXX. */
     fun generarCodigo(asistente: String, onExito: () -> Unit) {
         if (!validarSeleccion()) return
         val estadoActual = _uiState.value
@@ -176,16 +181,20 @@ class SesionAulaViewModel(
         _uiState.update { it.copy(guardando = true, error = null) }
         viewModelScope.launch {
             try {
-                repository.crearSesion(
+                val creada = repository.crearSesion(
                     modulo = estadoActual.modulo,
                     curso = estadoActual.curso,
                     estudiante = estadoActual.estudiante,
                     asistente = asistente,
-                    contenido = actividad.descripcionCorta
+                    contenido = actividad.descripcionCorta,
+                    actividadId = actividad.id
                 )
-                _uiState.update { it.copy(guardando = false) }
+                _uiState.update { it.copy(guardando = false, sesion = creada) }
                 onExito()
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
             } catch (e: Exception) {
+                // Por ejemplo, 409: "Finaliza la sesión actual antes de generar otra."
                 _uiState.update { actual ->
                     actual.copy(
                         guardando = false,
@@ -196,14 +205,17 @@ class SesionAulaViewModel(
         }
     }
 
+    /** PATCH /finalizar: cierra la sesión; el código deja de funcionar. */
     fun finalizarSesion(onExito: () -> Unit) {
         val sesionId = _uiState.value.sesion?.id ?: return
         _uiState.update { it.copy(guardando = true, error = null) }
         viewModelScope.launch {
             try {
-                repository.finalizarSesion(sesionId)
-                _uiState.update { it.copy(guardando = false) }
+                val finalizada = repository.finalizarSesion(sesionId)
+                _uiState.update { it.copy(guardando = false, sesion = finalizada) }
                 onExito()
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
             } catch (e: Exception) {
                 _uiState.update { actual ->
                     actual.copy(
@@ -211,6 +223,15 @@ class SesionAulaViewModel(
                         error = e.message ?: "No se pudo finalizar la sesión."
                     )
                 }
+            }
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val aplicacion = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                SesionAulaViewModel(SesionAulaRepository(SesionDispositivoStore(aplicacion)))
             }
         }
     }
