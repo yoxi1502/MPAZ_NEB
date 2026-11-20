@@ -32,9 +32,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel as obtenerViewModel
 import androidx.navigation.NavHostController
 import com.example.mpaz_neb.model.MatematicaUiState
+import com.example.mpaz_neb.model.PremioPokemonUiState
 import com.example.mpaz_neb.navigation.NavigationEvent
 import com.example.mpaz_neb.viewmodel.MatematicaViewModel
 import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
+import com.example.mpaz_neb.viewmodel.PremioPokemonViewModel
+import com.example.mpaz_neb.ui.components.PremioPokemon
 import com.example.mpaz_neb.nativo.LectorVoz
 import com.example.mpaz_neb.ui.components.BotonEscuchar
 import com.example.mpaz_neb.ui.components.ContadorAnimado
@@ -54,10 +57,12 @@ fun MatematicaScreen(
     navController: NavHostController,
     onNavigate: (NavigationEvent) -> Unit,
     matematicaViewModel: MatematicaViewModel = obtenerViewModel(),
-    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel()
+    preferenciasViewModel: PreferenciasViewModel = obtenerViewModel(),
+    premioViewModel: PremioPokemonViewModel = obtenerViewModel()
 ) {
     val estado by matematicaViewModel.uiState.collectAsState()
     val preferencias by preferenciasViewModel.uiState.collectAsState()
+    val premio by premioViewModel.uiState.collectAsState()
 
     // Recurso nativo: texto a voz
     val lector = rememberLectorVoz()
@@ -226,9 +231,17 @@ fun MatematicaScreen(
                     }
 
                     estado.finalizada -> {
+                        // API externa: al terminar se pide el Pokémon compañero
+                        LaunchedEffect(Unit) { premioViewModel.cargarPremio() }
+
                         ResultadoMatematica(
                             estado = estado,
-                            onRepetir = matematicaViewModel::reiniciarActividad,
+                            premio = premio,
+                            onReintentarPremio = premioViewModel::reintentar,
+                            onRepetir = {
+                                premioViewModel.reiniciar()
+                                matematicaViewModel.reiniciarActividad()
+                            },
                             onVolver = {
                                 actividadIniciada = false
                             }
@@ -615,6 +628,8 @@ private fun PreguntaMatematicaPanel(
 @Composable
 private fun ResultadoMatematica(
     estado: MatematicaUiState,
+    premio: PremioPokemonUiState,
+    onReintentarPremio: () -> Unit,
     onRepetir: () -> Unit,
     onVolver: () -> Unit
 ) {
@@ -669,6 +684,13 @@ private fun ResultadoMatematica(
             )
         }
     }
+
+    PremioPokemon(
+        estado = premio,
+        aciertos = estado.aciertos,
+        total = estado.preguntas.size,
+        onReintentar = onReintentarPremio
+    )
 
     Button(
         onClick = onRepetir,

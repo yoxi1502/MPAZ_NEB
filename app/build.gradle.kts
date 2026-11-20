@@ -69,6 +69,9 @@ dependencies {
     // Muestra en Logcat cada petición y respuesta HTTP (útil para la demostración)
     implementation(libs.okhttp.logging)
 
+    // Carga de imágenes desde internet (sprite del Pokémon)
+    implementation(libs.coil.compose)
+
     // Cámara (CameraX)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

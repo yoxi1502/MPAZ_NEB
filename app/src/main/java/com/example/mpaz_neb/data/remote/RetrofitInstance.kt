@@ -17,6 +17,9 @@ object RetrofitInstance {
     // URL base de la API pública de prueba (datos ficticios)
     const val BASE_URL = "https://jsonplaceholder.typicode.com/"
 
+    // API externa pública de Pokémon (sin clave)
+    const val URL_POKEAPI = "https://pokeapi.co/api/v2/"
+
     // Microservicios propios (Spring Boot) que corren en el computador
     private val HOST = BuildConfig.HOST_SERVIDOR
     val URL_ACTIVIDADES = "http://$HOST:8081/"
@@ -49,6 +52,10 @@ object RetrofitInstance {
     // Cada servicio se instancia una sola vez (lazy), la primera vez que se usa
     val api: ApiService by lazy {
         crearRetrofit(BASE_URL).create(ApiService::class.java)
+    }
+
+    val pokeApi: PokeApi by lazy {
+        crearRetrofit(URL_POKEAPI).create(PokeApi::class.java)
     }
 
     val actividadesApi: ActividadesApi by lazy {
