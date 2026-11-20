@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    jacoco
 }
 
 android {
@@ -26,6 +27,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Mide la cobertura de las pruebas unitarias (JaCoCo):
+            // ./gradlew createDebugUnitTestCoverageReport
+            enableUnitTestCoverage = true
+        }
         release {
             optimization {
                 enable = false
@@ -78,12 +84,56 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.compose)
 
-    // Pruebas
+    // Pruebas unitarias: JUnit, MockK (simula repositorios y APIs) y corrutinas de prueba
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+/**
+ * Reporte de cobertura SOLO de la lógica de la app: ViewModels, repositorios,
+ * modelos, DTO/mapeos y validaciones. Se dejan fuera las pantallas Compose y lo que
+ * necesita un dispositivo real (DataStore y la configuración de Retrofit), que se
+ * prueban ejecutando la app en el emulador.
+ *
+ * Ejecutar: ./gradlew reporteCoberturaLogica
+ * Resultado: app/build/reports/jacoco/reporteCoberturaLogica/html/index.html
+ */
+tasks.register<JacocoReport>("reporteCoberturaLogica") {
+    group = "verification"
+    description = "Cobertura de las pruebas unitarias sobre la lógica de la app."
+    dependsOn("testDebugUnitTest")
+
+    val clases = layout.buildDirectory.dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes")
+    classDirectories.setFrom(
+        clases.map { carpeta ->
+            fileTree(carpeta) {
+                include(
+                    "com/example/mpaz_neb/viewmodel/**",
+                    "com/example/mpaz_neb/repository/**",
+                    "com/example/mpaz_neb/model/**",
+                    "com/example/mpaz_neb/data/**",
+                    "com/example/mpaz_neb/validacion/**"
+                )
+                exclude(
+                    "com/example/mpaz_neb/data/local/**",
+                    "com/example/mpaz_neb/data/remote/RetrofitInstance*"
+                )
+            }
+        }
+    )
+    sourceDirectories.setFrom(files("src/main/java"))
+    executionData.setFrom(
+        layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+    )
+    reports {
+        html.required = true
+        xml.required = true
+    }
 }
