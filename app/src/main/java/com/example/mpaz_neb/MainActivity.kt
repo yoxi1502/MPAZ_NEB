@@ -17,7 +17,7 @@ import com.example.mpaz_neb.viewmodel.SesionUsuarioViewModel
 class MainActivity : ComponentActivity() {
 
     // ViewModel compartido con la sesión del equipo pedagógico (ligado a la Activity)
-    private val sesionUsuarioViewModel: SesionUsuarioViewModel by viewModels()
+    private val sesionUsuarioViewModel: SesionUsuarioViewModel by viewModels { SesionUsuarioViewModel.Factory }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

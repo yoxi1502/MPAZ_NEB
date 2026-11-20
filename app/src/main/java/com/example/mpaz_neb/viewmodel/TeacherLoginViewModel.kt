@@ -1,8 +1,11 @@
 package com.example.mpaz_neb.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.mpaz_neb.data.local.UsuarioSesionStore
 import com.example.mpaz_neb.model.TeacherLoginUiState
 import com.example.mpaz_neb.repository.UsuarioRepository
 import com.example.mpaz_neb.validacion.Validadores
@@ -13,11 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** Login del equipo pedagógico: valida en la app y autentica contra ms-usuarios. */
 class TeacherLoginViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository = UsuarioRepository(application)
+    private val repository: UsuarioRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TeacherLoginUiState())
     val uiState: StateFlow<TeacherLoginUiState> = _uiState.asStateFlow()
@@ -34,7 +36,7 @@ class TeacherLoginViewModel(
         }
     }
 
-    /** Valida cada campo y, si todo es correcto, autentica contra las cuentas de prueba. */
+    /** Valida cada campo y, si todo es correcto, envía el login al microservicio. */
     fun ingresar(onExito: () -> Unit) {
         val estado = _uiState.value
         if (estado.ingresando) return
@@ -69,6 +71,15 @@ class TeacherLoginViewModel(
                         errorGeneral = error.message ?: "No se pudo iniciar sesión."
                     )
                 }
+            }
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val aplicacion = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                TeacherLoginViewModel(UsuarioRepository(UsuarioSesionStore(aplicacion)))
             }
         }
     }
