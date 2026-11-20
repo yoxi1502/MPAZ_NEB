@@ -12,6 +12,7 @@ enum class EstadoSesion(val etiqueta: String) {
     FINALIZADA("Sesión finalizada")
 }
 
+/** Resultado de un intento. [id] es el id del intento que genera la app. */
 data class ResultadoIntento(
     val id: String,
     val aciertos: Int,
@@ -21,8 +22,9 @@ data class ResultadoIntento(
     val errores: Int get() = total - aciertos
 }
 
+/** Sesión de práctica guardada en el microservicio ms-sesiones. */
 data class SesionAula(
-    val id: String,
+    val id: Long,
     val codigo: String,
     val estudiante: String,
     val asistente: String,
@@ -33,8 +35,10 @@ data class SesionAula(
     val creadaEn: Long,
     val resultados: List<ResultadoIntento> = emptyList(),
     val observacion: String = "",
-    val finalizadaEn: Long? = null
+    val finalizadaEn: Long? = null,
+    val actividadId: Long? = null
 ) {
     val ultimoResultado: ResultadoIntento? get() = resultados.lastOrNull()
     val intentosCompletados: Int get() = resultados.size
+    val abierta: Boolean get() = estado != EstadoSesion.FINALIZADA
 }

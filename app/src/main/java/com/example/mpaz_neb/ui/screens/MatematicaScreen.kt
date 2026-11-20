@@ -56,7 +56,7 @@ import androidx.compose.animation.togetherWith
 fun MatematicaScreen(
     navController: NavHostController,
     onNavigate: (NavigationEvent) -> Unit,
-    matematicaViewModel: MatematicaViewModel = obtenerViewModel(),
+    matematicaViewModel: MatematicaViewModel = obtenerViewModel(factory = MatematicaViewModel.Factory),
     preferenciasViewModel: PreferenciasViewModel = obtenerViewModel(),
     premioViewModel: PremioPokemonViewModel = obtenerViewModel()
 ) {
@@ -679,7 +679,7 @@ private fun ResultadoMatematica(
             )
 
             Text(
-                text = "Tu resultado quedó guardado en este dispositivo.",
+                text = if (estado.enviadoAlServidor) "Tu resultado quedó guardado y tu asistente ya lo puede ver." else "Tu resultado quedó guardado en este dispositivo.",
                 textAlign = TextAlign.Center
             )
         }

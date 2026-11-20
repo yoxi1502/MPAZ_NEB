@@ -2,6 +2,8 @@ package com.example.mpaz_neb.data.model
 
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.ResultadoIntento
+import com.example.mpaz_neb.model.SesionAula
 
 /** Sesión de aula tal como la entrega ms-sesiones. */
 data class SesionDto(
@@ -53,4 +55,29 @@ data class ResultadoRequestDto(
 /** Cuerpo del PATCH /api/sesiones/{id}/observacion. */
 data class ObservacionDto(
     val observacion: String
+)
+
+// ---- Conversión entre el JSON del microservicio y el modelo de la app ----
+
+fun SesionDto.aModelo(): SesionAula = SesionAula(
+    id = id,
+    codigo = codigo,
+    estudiante = estudiante,
+    asistente = asistente,
+    curso = curso,
+    modulo = modulo,
+    contenido = contenido,
+    estado = estado,
+    creadaEn = isoAMilis(creadaEn) ?: 0L,
+    resultados = resultados.orEmpty().map { it.aModelo() },
+    observacion = observacion.orEmpty(),
+    finalizadaEn = isoAMilis(finalizadaEn),
+    actividadId = actividadId
+)
+
+fun ResultadoDto.aModelo(): ResultadoIntento = ResultadoIntento(
+    id = intentoId,
+    aciertos = aciertos,
+    total = total,
+    fecha = isoAMilis(fecha) ?: 0L
 )

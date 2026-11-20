@@ -36,7 +36,7 @@ fun AssignActivityScreen(
     navController: NavHostController,
     usuario: UsuarioSesion,
     onCerrarSesion: () -> Unit,
-    sesionViewModel: SesionAulaViewModel = obtenerViewModel(),
+    sesionViewModel: SesionAulaViewModel = obtenerViewModel(factory = SesionAulaViewModel.Factory),
     preferenciasViewModel: PreferenciasViewModel = obtenerViewModel()
 ) {
     val estado by sesionViewModel.uiState.collectAsState()
@@ -44,6 +44,9 @@ fun AssignActivityScreen(
     val sesionAbierta = estado.sesion?.estado?.let { it != EstadoSesion.FINALIZADA } == true
 
     BackHandler(enabled = estado.guardando) { }
+
+    // GET a ms-sesiones: muestra si hay una sesión abierta en este dispositivo
+    LaunchedEffect(Unit) { sesionViewModel.cargarSesion() }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(

@@ -54,7 +54,7 @@ import androidx.compose.animation.togetherWith
 @Composable
 fun LecturaScreen(
     navController: NavController,
-    lecturaViewModel: LecturaViewModel = obtenerViewModel(),
+    lecturaViewModel: LecturaViewModel = obtenerViewModel(factory = LecturaViewModel.Factory),
     preferenciasViewModel: PreferenciasViewModel = obtenerViewModel(),
     premioViewModel: PremioPokemonViewModel = obtenerViewModel()
 ) {
@@ -732,7 +732,7 @@ private fun ResultadoLectura(
                 )
 
                 Text(
-                    text = "Tu resultado quedó guardado.",
+                    text = if (estado.enviadoAlServidor) "Tu resultado quedó guardado y tu asistente ya lo puede ver." else "Tu resultado quedó guardado en este dispositivo.",
                     fontSize = 15.sp
                 )
             }

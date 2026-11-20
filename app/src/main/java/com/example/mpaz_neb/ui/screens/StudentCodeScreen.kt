@@ -39,7 +39,7 @@ import com.example.mpaz_neb.viewmodel.StudentCodeViewModel
 @Composable
 fun StudentCodeScreen(
     navController: NavController,
-    studentCodeViewModel: StudentCodeViewModel = obtenerViewModel()
+    studentCodeViewModel: StudentCodeViewModel = obtenerViewModel(factory = StudentCodeViewModel.Factory)
 ) {
     val estado by studentCodeViewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current

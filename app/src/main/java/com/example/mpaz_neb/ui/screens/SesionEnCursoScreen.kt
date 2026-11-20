@@ -27,12 +27,15 @@ import com.example.mpaz_neb.viewmodel.SesionAulaViewModel
 @Composable
 fun SesionEnCursoScreen(
     navController: NavHostController,
-    sesionViewModel: SesionAulaViewModel = obtenerViewModel()
+    sesionViewModel: SesionAulaViewModel = obtenerViewModel(factory = SesionAulaViewModel.Factory)
 ) {
     val estado by sesionViewModel.uiState.collectAsState()
     val sesion = estado.sesion
     var confirmarCierre by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = estado.guardando) { }
+
+    // GET a ms-sesiones al abrir: trae el estado y los resultados más recientes
+    LaunchedEffect(Unit) { sesionViewModel.cargarSesion() }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -50,7 +53,13 @@ fun SesionEnCursoScreen(
             estado.error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error)
                 TextButton(enabled = !estado.guardando, onClick = sesionViewModel::cargarSesion) {
-                    Text("Reintentar lectura")
+                    Text("Reintentar")
+                }
+            }
+            if (sesion != null && !estado.cargando) {
+                // Permite ver en tiempo real cuando el estudiante termina la actividad
+                OutlinedButton(enabled = !estado.guardando, onClick = sesionViewModel::cargarSesion) {
+                    Text("Actualizar estado")
                 }
             }
 
@@ -65,7 +74,7 @@ fun SesionEnCursoScreen(
                         Text(sesion.codigo, style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         Text(if (sesion.estado == EstadoSesion.FINALIZADA) "Este código ya está cerrado."
-                        else "Válido en este dispositivo hasta finalizar la sesión.")
+                        else "Válido hasta finalizar la sesión.")
                     }
                 }
                 Card(Modifier.fillMaxWidth()) {

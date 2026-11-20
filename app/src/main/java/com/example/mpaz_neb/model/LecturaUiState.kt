@@ -25,5 +25,7 @@ data class LecturaUiState(
     val aciertos: Int = 0,
     val finalizada: Boolean = false,
     val guardando: Boolean = false,
-    val errorGuardado: String? = null
+    val errorGuardado: String? = null,
+    // true si el resultado también quedó en ms-sesiones (había una sesión abierta)
+    val enviadoAlServidor: Boolean = false
 )
