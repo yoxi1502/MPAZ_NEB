@@ -192,6 +192,16 @@ fun AssignActivityScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth()
                 )
+            } else if (estado.errorActividades != null) {
+                // ms-actividades no respondió: se ofrece volver a intentarlo
+                Text(
+                    text = estado.errorActividades.orEmpty(),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                TextButton(onClick = sesionViewModel::cargarActividades) {
+                    Text("Reintentar")
+                }
             } else if (estado.curso.isBlank()) {
                 Text(
                     text = "Elige un curso para ver las actividades disponibles.",

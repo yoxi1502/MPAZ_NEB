@@ -12,9 +12,12 @@ enum class EstadoActividad(val etiqueta: String) {
     DESACTIVADA("Desactivada")
 }
 
-/** Actividad del catálogo pedagógico (datos ficticios definidos por docente/UTP). */
+/**
+ * Actividad del catálogo pedagógico (datos ficticios definidos por docente/UTP).
+ * Se guarda en el microservicio ms-actividades; [id] es null mientras no se ha creado.
+ */
 data class Actividad(
-    val id: String,
+    val id: Long?,
     val nombre: String,
     val modulo: ModuloActividad,
     val curso: String,

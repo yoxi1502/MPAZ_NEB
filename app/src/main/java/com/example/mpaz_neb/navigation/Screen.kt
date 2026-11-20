@@ -15,7 +15,7 @@ sealed class Screen(val route: String) {
 
     /** Formulario de actividad: sin id crea una nueva, con id la edita. */
     object ActividadForm : Screen("actividad_form?id={id}") {
-        fun crear(id: String?): String =
+        fun crear(id: Long?): String =
             if (id == null) "actividad_form" else "actividad_form?id=$id"
     }
 }

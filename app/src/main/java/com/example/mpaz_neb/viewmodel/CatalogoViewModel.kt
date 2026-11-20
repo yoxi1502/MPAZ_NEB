@@ -1,7 +1,6 @@
 package com.example.mpaz_neb.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mpaz_neb.model.Actividad
 import com.example.mpaz_neb.model.CatalogoUiState
@@ -15,34 +14,30 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Lista y filtra el catálogo; permite activar o desactivar actividades. */
+/**
+ * Catálogo de actividades del microservicio ms-actividades:
+ * lista (GET), activa/desactiva (PATCH) y elimina (DELETE).
+ * Crear y editar se hacen en ActividadFormViewModel.
+ */
 class CatalogoViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-
-    private val repository = ActividadRepository(application)
+    private val repository: ActividadRepository = ActividadRepository()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CatalogoUiState())
     val uiState: StateFlow<CatalogoUiState> = _uiState.asStateFlow()
 
-    init {
+    /** GET: la pantalla lo llama al abrirse y al volver del formulario. */
+    fun cargar() {
+        _uiState.update { it.copy(cargando = true, error = null) }
         viewModelScope.launch {
             try {
-                repository.actividades.collect { lista ->
-                    _uiState.update {
-                        it.copy(
-                            actividades = lista.sortedWith(
-                                compareBy<Actividad> { a -> a.modulo }.thenBy { a -> a.curso }
-                            ),
-                            cargando = false
-                        )
-                    }
-                }
+                val lista = repository.listar()
+                _uiState.update { it.copy(actividades = ordenar(lista), cargando = false) }
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(cargando = false, error = "No se pudo cargar el catálogo.")
+                    it.copy(cargando = false, error = e.message ?: "No se pudo cargar el catálogo.")
                 }
             }
         }
@@ -56,17 +51,72 @@ class CatalogoViewModel(
         _uiState.update { it.copy(filtroCurso = curso) }
     }
 
-    /** Activa (Disponible) o desactiva una actividad sin borrarla. */
+    /** PATCH: activa (Disponible) o desactiva una actividad sin borrarla. */
     fun cambiarDisponible(actividad: Actividad, disponible: Boolean) {
+        val id = actividad.id ?: return
+        if (_uiState.value.procesandoId != null) return
         val nuevoEstado = if (disponible) EstadoActividad.DISPONIBLE else EstadoActividad.DESACTIVADA
+
+        _uiState.update { it.copy(procesandoId = id) }
         viewModelScope.launch {
             try {
-                repository.cambiarEstado(actividad.id, nuevoEstado)
+                val actualizada = repository.cambiarEstado(id, nuevoEstado)
+                _uiState.update { estado ->
+                    estado.copy(
+                        actividades = estado.actividades.map { if (it.id == id) actualizada else it },
+                        procesandoId = null,
+                        mensaje = "\"${actualizada.nombre}\" quedó ${actualizada.estado.etiqueta.lowercase()}."
+                    )
+                }
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message ?: "No se pudo actualizar.") }
+                _uiState.update {
+                    it.copy(procesandoId = null, mensaje = e.message ?: "No se pudo actualizar.")
+                }
             }
         }
     }
+
+    // ---- Eliminar: primero se pide confirmación, luego DELETE ----
+
+    fun pedirEliminar(actividad: Actividad) {
+        _uiState.update { it.copy(actividadAEliminar = actividad) }
+    }
+
+    fun cancelarEliminar() {
+        _uiState.update { it.copy(actividadAEliminar = null) }
+    }
+
+    fun confirmarEliminar() {
+        val actividad = _uiState.value.actividadAEliminar ?: return
+        val id = actividad.id ?: return
+
+        _uiState.update { it.copy(actividadAEliminar = null, procesandoId = id) }
+        viewModelScope.launch {
+            try {
+                repository.eliminar(id)
+                _uiState.update { estado ->
+                    estado.copy(
+                        actividades = estado.actividades.filterNot { it.id == id },
+                        procesandoId = null,
+                        mensaje = "Se eliminó \"${actividad.nombre}\"."
+                    )
+                }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(procesandoId = null, mensaje = e.message ?: "No se pudo eliminar.")
+                }
+            }
+        }
+    }
+
+    fun limpiarMensaje() {
+        _uiState.update { it.copy(mensaje = null) }
+    }
+
+    private fun ordenar(lista: List<Actividad>): List<Actividad> =
+        lista.sortedWith(compareBy<Actividad> { it.modulo }.thenBy { it.curso }.thenBy { it.nombre })
 }
