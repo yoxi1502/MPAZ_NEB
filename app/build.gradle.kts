@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     jacoco
 }
+
+// Datos de la llave de firma (keystore.properties en la raíz del proyecto).
+// Si el archivo no existe, el APK release se genera sin firmar.
+val propiedadesFirma = Properties().apply {
+    val archivo = rootProject.file("keystore.properties")
+    if (archivo.exists()) archivo.inputStream().use { load(it) }
+}
+val hayLlaveDeFirma = !propiedadesFirma.isEmpty
 
 android {
     namespace = "com.example.mpaz_neb"
@@ -14,8 +24,8 @@ android {
         applicationId = "com.example.mpaz_neb"
         minSdk = 30
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -26,6 +36,18 @@ android {
         buildConfigField("String", "HOST_SERVIDOR", "\"$hostServidor\"")
     }
 
+    // Firma del APK release con la llave .jks (ver README: "Firma del APK")
+    signingConfigs {
+        create("release") {
+            if (hayLlaveDeFirma) {
+                storeFile = rootProject.file(propiedadesFirma.getProperty("storeFile"))
+                storePassword = propiedadesFirma.getProperty("storePassword")
+                keyAlias = propiedadesFirma.getProperty("keyAlias")
+                keyPassword = propiedadesFirma.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // Mide la cobertura de las pruebas unitarias (JaCoCo):
@@ -33,6 +55,7 @@ android {
             enableUnitTestCoverage = true
         }
         release {
+            if (hayLlaveDeFirma) signingConfig = signingConfigs.getByName("release")
             optimization {
                 enable = false
             }
