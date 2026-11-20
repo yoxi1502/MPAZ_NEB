@@ -8,6 +8,7 @@ import com.example.mpaz_neb.model.SesionAulaUiState
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.repository.ActividadRepository
 import com.example.mpaz_neb.model.Actividad
+import com.example.mpaz_neb.model.EstadoActividad
 import com.example.mpaz_neb.validacion.Validadores
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -22,7 +23,7 @@ class SesionAulaViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = SesionAulaRepository(application)
-    private val actividadRepository = ActividadRepository(application)
+    private val actividadRepository = ActividadRepository()
 
     private val _uiState = MutableStateFlow(SesionAulaUiState())
     val uiState: StateFlow<SesionAulaUiState> = _uiState.asStateFlow()
@@ -31,9 +32,21 @@ class SesionAulaViewModel(
 
     init {
         cargarSesion()
+        cargarActividades()
+    }
+
+    /** GET a ms-actividades: solo las actividades Disponibles se pueden asignar. */
+    fun cargarActividades() {
         viewModelScope.launch {
-            actividadRepository.actividades.collect { lista ->
-                _uiState.update { it.copy(actividades = lista) }
+            try {
+                val lista = actividadRepository.listar(estado = EstadoActividad.DISPONIBLE)
+                _uiState.update { it.copy(actividades = lista, errorActividades = null) }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(errorActividades = e.message ?: "No se pudo cargar el catálogo.")
+                }
             }
         }
     }

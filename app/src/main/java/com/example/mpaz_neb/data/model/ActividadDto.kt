@@ -1,5 +1,6 @@
 package com.example.mpaz_neb.data.model
 
+import com.example.mpaz_neb.model.Actividad
 import com.example.mpaz_neb.model.Dificultad
 import com.example.mpaz_neb.model.EstadoActividad
 import com.example.mpaz_neb.model.ModuloActividad
@@ -40,4 +41,34 @@ data class ActividadRequestDto(
 /** Cuerpo del PATCH /estado. */
 data class CambioEstadoDto(
     val estado: EstadoActividad
+)
+
+// ---- Conversión entre el JSON del microservicio y el modelo de la app ----
+
+fun ActividadDto.aModelo(): Actividad = Actividad(
+    id = id,
+    nombre = nombre,
+    modulo = modulo,
+    curso = curso,
+    contenido = contenido,
+    objetivo = objetivo,
+    dificultad = dificultad,
+    instrucciones = instrucciones,
+    cantidadPreguntas = cantidadPreguntas,
+    intentosPermitidos = intentosPermitidos,
+    estado = estado,
+    actualizadaEn = isoAMilis(actualizadaEn) ?: 0L
+)
+
+fun Actividad.aRequest(): ActividadRequestDto = ActividadRequestDto(
+    nombre = nombre,
+    modulo = modulo,
+    curso = curso,
+    contenido = contenido,
+    objetivo = objetivo,
+    dificultad = dificultad,
+    instrucciones = instrucciones,
+    cantidadPreguntas = cantidadPreguntas,
+    intentosPermitidos = intentosPermitidos,
+    estado = estado
 )

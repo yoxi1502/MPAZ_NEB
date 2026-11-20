@@ -4,7 +4,7 @@ import com.example.mpaz_neb.repository.SesionAulaRepository
 
 /** Estado del formulario para crear o editar una actividad del catálogo. */
 data class ActividadFormUiState(
-    val id: String? = null,
+    val id: Long? = null,
     val nombre: String = "",
     val modulo: ModuloActividad = ModuloActividad.LECTURA,
     val curso: String = SesionAulaRepository.CURSOS.first(),
@@ -37,7 +37,14 @@ data class CatalogoUiState(
     val filtroModulo: ModuloActividad? = null,
     val filtroCurso: String? = null,
     val cargando: Boolean = true,
-    val error: String? = null
+    // Error al cargar la lista (se muestra con el botón Reintentar)
+    val error: String? = null,
+    // Mensaje breve tras una acción (Snackbar): "Actividad eliminada", errores del servidor, etc.
+    val mensaje: String? = null,
+    // Actividad que espera confirmación para eliminarse (muestra el diálogo)
+    val actividadAEliminar: Actividad? = null,
+    // Id de la actividad que se está actualizando o eliminando en el servidor
+    val procesandoId: Long? = null
 ) {
     val filtradas: List<Actividad>
         get() = actividades.filter { actividad ->

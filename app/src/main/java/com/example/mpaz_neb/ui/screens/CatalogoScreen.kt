@@ -8,11 +8,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -26,7 +30,10 @@ import com.example.mpaz_neb.navigation.Screen
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.viewmodel.CatalogoViewModel
 
-/** Catálogo de actividades: consulta, filtros y activación (perfil docente/UTP). */
+/**
+ * Catálogo de actividades (perfil docente/UTP) conectado al microservicio ms-actividades:
+ * consulta, filtros, activación y eliminación.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogoScreen(
@@ -34,8 +41,37 @@ fun CatalogoScreen(
     catalogoViewModel: CatalogoViewModel = obtenerViewModel()
 ) {
     val estado by catalogoViewModel.uiState.collectAsState()
+    val avisos = remember { SnackbarHostState() }
+
+    // GET al abrir la pantalla y cada vez que se vuelve del formulario
+    LaunchedEffect(Unit) { catalogoViewModel.cargar() }
+
+    // Muestra el resultado de activar, desactivar o eliminar
+    LaunchedEffect(estado.mensaje) {
+        estado.mensaje?.let {
+            avisos.showSnackbar(it)
+            catalogoViewModel.limpiarMensaje()
+        }
+    }
+
+    estado.actividadAEliminar?.let { actividad ->
+        AlertDialog(
+            onDismissRequest = catalogoViewModel::cancelarEliminar,
+            title = { Text("¿Eliminar actividad?") },
+            text = {
+                Text("Se eliminará \"${actividad.nombre}\" del catálogo. Esta acción no se puede deshacer.")
+            },
+            confirmButton = {
+                TextButton(onClick = catalogoViewModel::confirmarEliminar) { Text("Eliminar") }
+            },
+            dismissButton = {
+                TextButton(onClick = catalogoViewModel::cancelarEliminar) { Text("Cancelar") }
+            }
+        )
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(avisos) },
         topBar = {
             TopAppBar(
                 title = { Text("Catálogo de actividades") },
@@ -109,17 +145,28 @@ fun CatalogoScreen(
             }
 
             estado.error?.let { mensaje ->
-                item { Text(mensaje, color = MaterialTheme.colorScheme.error) }
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(mensaje, color = MaterialTheme.colorScheme.error)
+                        OutlinedButton(onClick = catalogoViewModel::cargar) {
+                            Icon(Icons.Default.Refresh, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Reintentar")
+                        }
+                    }
+                }
             }
 
-            if (!estado.cargando && estado.filtradas.isEmpty()) {
+            if (!estado.cargando && estado.error == null && estado.filtradas.isEmpty()) {
                 item { Text("No hay actividades con estos filtros.") }
             }
 
-            items(estado.filtradas, key = { it.id }) { actividad ->
+            items(estado.filtradas, key = { it.id ?: 0L }) { actividad ->
                 TarjetaActividad(
                     actividad = actividad,
+                    procesando = estado.procesandoId == actividad.id,
                     onEditar = { navController.navigate(Screen.ActividadForm.crear(actividad.id)) },
+                    onEliminar = { catalogoViewModel.pedirEliminar(actividad) },
                     onDisponible = { catalogoViewModel.cambiarDisponible(actividad, it) },
                     modifier = Modifier.animateItem()
                 )
@@ -131,7 +178,9 @@ fun CatalogoScreen(
 @Composable
 private fun TarjetaActividad(
     actividad: Actividad,
+    procesando: Boolean,
     onEditar: () -> Unit,
+    onEliminar: () -> Unit,
     onDisponible: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -154,8 +203,15 @@ private fun TarjetaActividad(
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                IconButton(onClick = onEditar) {
+                IconButton(onClick = onEditar, enabled = !procesando) {
                     Icon(Icons.Default.Edit, contentDescription = "Editar ${actividad.nombre}")
+                }
+                IconButton(onClick = onEliminar, enabled = !procesando) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Eliminar ${actividad.nombre}",
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
             Text("Objetivo: ${actividad.objetivo}", style = MaterialTheme.typography.bodyMedium)
@@ -174,7 +230,8 @@ private fun TarjetaActividad(
                 Spacer(Modifier.width(8.dp))
                 Switch(
                     checked = actividad.estado == EstadoActividad.DISPONIBLE,
-                    onCheckedChange = onDisponible
+                    onCheckedChange = onDisponible,
+                    enabled = !procesando
                 )
             }
         }

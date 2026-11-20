@@ -1,9 +1,12 @@
 package com.example.mpaz_neb.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.mpaz_neb.model.Actividad
 import com.example.mpaz_neb.model.ActividadFormUiState
 import com.example.mpaz_neb.model.CampoActividad
@@ -16,22 +19,20 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
  * Formulario de creación/edición de actividades (perfil docente/UTP).
  * Recibe el id de la actividad por la ruta de navegación; si no viene, es una actividad nueva.
+ * Guarda con POST (nueva) o PUT (edición) en el microservicio ms-actividades.
  */
 class ActividadFormViewModel(
-    application: Application,
-    savedStateHandle: SavedStateHandle
-) : AndroidViewModel(application) {
+    savedStateHandle: SavedStateHandle,
+    private val repository: ActividadRepository = ActividadRepository()
+) : ViewModel() {
 
-    private val repository = ActividadRepository(application)
-
-    private val idActividad: String? = savedStateHandle.get<String>(ARG_ID)
+    private val idActividad: Long? = savedStateHandle.get<String>(ARG_ID)?.toLongOrNull()
 
     private val _uiState = MutableStateFlow(ActividadFormUiState())
     val uiState: StateFlow<ActividadFormUiState> = _uiState.asStateFlow()
@@ -40,27 +41,30 @@ class ActividadFormViewModel(
         if (idActividad != null) cargar(idActividad)
     }
 
-    private fun cargar(id: String) {
+    /** GET /api/actividades/{id}: llena el formulario con los datos del servidor. */
+    private fun cargar(id: Long) {
         _uiState.update { it.copy(cargando = true) }
         viewModelScope.launch {
-            val actividad = repository.actividades.first().firstOrNull { it.id == id }
-            _uiState.update {
-                if (actividad == null) {
-                    it.copy(cargando = false, errorGeneral = "No se encontró la actividad.")
-                } else {
-                    ActividadFormUiState(
-                        id = actividad.id,
-                        nombre = actividad.nombre,
-                        modulo = actividad.modulo,
-                        curso = actividad.curso,
-                        contenido = actividad.contenido,
-                        objetivo = actividad.objetivo,
-                        dificultad = actividad.dificultad,
-                        instrucciones = actividad.instrucciones,
-                        cantidadPreguntas = actividad.cantidadPreguntas.toString(),
-                        intentosPermitidos = actividad.intentosPermitidos.toString(),
-                        estado = actividad.estado
-                    )
+            try {
+                val actividad = repository.obtener(id)
+                _uiState.value = ActividadFormUiState(
+                    id = actividad.id,
+                    nombre = actividad.nombre,
+                    modulo = actividad.modulo,
+                    curso = actividad.curso,
+                    contenido = actividad.contenido,
+                    objetivo = actividad.objetivo,
+                    dificultad = actividad.dificultad,
+                    instrucciones = actividad.instrucciones,
+                    cantidadPreguntas = actividad.cantidadPreguntas.toString(),
+                    intentosPermitidos = actividad.intentosPermitidos.toString(),
+                    estado = actividad.estado
+                )
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(cargando = false, errorGeneral = e.message ?: "No se encontró la actividad.")
                 }
             }
         }
@@ -89,7 +93,7 @@ class ActividadFormViewModel(
     fun cambiarDificultad(valor: Dificultad) = _uiState.update { it.copy(dificultad = valor) }
     fun cambiarEstado(valor: EstadoActividad) = _uiState.update { it.copy(estado = valor) }
 
-    /** Valida todos los campos; si hay errores los muestra y no guarda. */
+    /** Valida todos los campos; si hay errores los muestra y no envía nada al servidor. */
     fun guardar(onExito: () -> Unit) {
         val estado = _uiState.value
         if (estado.guardando) return
@@ -119,7 +123,7 @@ class ActividadFormViewModel(
             try {
                 repository.guardar(
                     Actividad(
-                        id = estado.id.orEmpty(),
+                        id = estado.id,
                         nombre = estado.nombre.trim(),
                         modulo = estado.modulo,
                         curso = estado.curso,
@@ -138,6 +142,7 @@ class ActividadFormViewModel(
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (e: Exception) {
+                // Por ejemplo: 409 "Ya existe una actividad con ese nombre..." o sin conexión
                 _uiState.update {
                     it.copy(guardando = false, errorGeneral = e.message ?: "No se pudo guardar.")
                 }
@@ -147,5 +152,10 @@ class ActividadFormViewModel(
 
     companion object {
         const val ARG_ID = "id"
+
+        /** Crea el ViewModel entregándole el SavedStateHandle con el id de la ruta. */
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer { ActividadFormViewModel(createSavedStateHandle()) }
+        }
     }
 }

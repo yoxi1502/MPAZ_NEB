@@ -37,7 +37,7 @@ import com.example.mpaz_neb.viewmodel.ActividadFormViewModel
 @Composable
 fun ActividadFormScreen(
     navController: NavController,
-    formViewModel: ActividadFormViewModel = obtenerViewModel()
+    formViewModel: ActividadFormViewModel = obtenerViewModel(factory = ActividadFormViewModel.Factory)
 ) {
     val estado by formViewModel.uiState.collectAsState()
     val scroll = rememberScrollState()
