@@ -140,7 +140,7 @@ class SesionControllerTest {
 
     private SesionResponse respuesta(EstadoSesion estado) {
         return new SesionResponse(1L, "MPAZ-AB12CD", "Estudiante 01 - Aula A", "Asistente Aula A",
-                "2.° Año Básico", Modulo.LECTURA, "Una tarde en el parque · Inicial", 1L, estado, "",
+                "2.° Año Básico", Modulo.LECTURA, "Una tarde en el parque · Inicial", 1L, 2, estado, "",
                 Instant.now(), null, List.of());
     }
 }

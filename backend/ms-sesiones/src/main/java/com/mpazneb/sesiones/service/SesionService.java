@@ -67,7 +67,8 @@ public class SesionService {
 
     /**
      * Guarda el resultado de un intento. Si la app reenvía el mismo intento
-     * (por ejemplo, tras un corte de red) no se duplica.
+     * (por ejemplo, tras un corte de red) no se duplica. Si la sesión tiene
+     * límite de intentos y ya se alcanzó, se rechaza con 409.
      */
     @Transactional
     public SesionResponse registrarResultado(Long id, ResultadoRequest request) {
@@ -79,6 +80,10 @@ public class SesionService {
         }
         if (sesion.getEstado() != EstadoSesion.EN_CURSO && sesion.getEstado() != EstadoSesion.COMPLETADA) {
             throw new ReglaNegocioException("La sesión ya no admite respuestas.");
+        }
+        if (sesion.sinIntentosDisponibles()) {
+            throw new ReglaNegocioException("Ya se usaron los " + sesion.getIntentosPermitidos()
+                    + " intentos permitidos de esta actividad.");
         }
         sesion.agregarResultado(new ResultadoIntento(request.intentoId(), request.aciertos(), request.total()));
         sesion.setEstado(EstadoSesion.COMPLETADA);

@@ -1,6 +1,8 @@
 package com.mpazneb.sesiones.dto;
 
 import com.mpazneb.sesiones.model.Modulo;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,6 +29,11 @@ public record SesionRequest(
         @Size(max = 120, message = "El contenido admite hasta 120 caracteres.")
         String contenido,
 
-        Long actividadId
+        Long actividadId,
+
+        /** Opcional: si viene, limita cuántos resultados acepta la sesión. */
+        @Min(value = 1, message = "Debe permitir al menos 1 intento.")
+        @Max(value = 5, message = "Admite hasta 5 intentos.")
+        Integer intentosPermitidos
 ) {
 }

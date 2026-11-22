@@ -40,7 +40,7 @@ class SesionServiceTest {
     private SesionService service;
 
     private final SesionRequest request = new SesionRequest(Modulo.LECTURA, "2.° Año Básico",
-            "Estudiante 01 - Aula A", "Asistente Aula A", "Una tarde en el parque · Inicial", 1L);
+            "Estudiante 01 - Aula A", "Asistente Aula A", "Una tarde en el parque · Inicial", 1L, 2);
 
     @Test
     void crearGeneraUnCodigoYDejaLaSesionCreada() {
@@ -55,6 +55,7 @@ class SesionServiceTest {
         assertThat(creada.codigo()).isEqualTo("MPAZ-AAAAAA");
         assertThat(creada.estado()).isEqualTo(EstadoSesion.CREADA);
         assertThat(creada.resultados()).isEmpty();
+        assertThat(creada.intentosPermitidos()).isEqualTo(2);
     }
 
     @Test
@@ -129,6 +130,45 @@ class SesionServiceTest {
 
         assertThat(respuesta.resultados()).hasSize(1);
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void registrarUnIntentoMasAllaDelLimiteLanzaReglaDeNegocio() {
+        SesionAula sesion = sesion(EstadoSesion.COMPLETADA);
+        sesion.setIntentosPermitidos(2);
+        sesion.agregarResultado(new ResultadoIntento("intento-1", 2, 3));
+        sesion.agregarResultado(new ResultadoIntento("intento-2", 3, 3));
+        when(repository.findById(1L)).thenReturn(Optional.of(sesion));
+
+        assertThatThrownBy(() -> service.registrarResultado(1L, new ResultadoRequest("intento-3", 1, 3)))
+                .isInstanceOf(ReglaNegocioException.class)
+                .hasMessageContaining("2 intentos");
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void reenviarElUltimoIntentoPermitidoNoLanzaError() {
+        SesionAula sesion = sesion(EstadoSesion.COMPLETADA);
+        sesion.setIntentosPermitidos(1);
+        sesion.agregarResultado(new ResultadoIntento("intento-1", 2, 3));
+        when(repository.findById(1L)).thenReturn(Optional.of(sesion));
+
+        SesionResponse respuesta = service.registrarResultado(1L, new ResultadoRequest("intento-1", 2, 3));
+
+        assertThat(respuesta.resultados()).hasSize(1);
+    }
+
+    @Test
+    void registrarDentroDelLimiteGuardaElResultado() {
+        SesionAula sesion = sesion(EstadoSesion.COMPLETADA);
+        sesion.setIntentosPermitidos(2);
+        sesion.agregarResultado(new ResultadoIntento("intento-1", 2, 3));
+        when(repository.findById(1L)).thenReturn(Optional.of(sesion));
+        when(repository.save(sesion)).thenReturn(sesion);
+
+        SesionResponse respuesta = service.registrarResultado(1L, new ResultadoRequest("intento-2", 3, 3));
+
+        assertThat(respuesta.resultados()).hasSize(2);
     }
 
     @Test

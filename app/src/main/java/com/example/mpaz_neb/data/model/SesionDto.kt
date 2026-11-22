@@ -15,6 +15,7 @@ data class SesionDto(
     val modulo: ModuloActividad,
     val contenido: String,
     val actividadId: Long?,
+    val intentosPermitidos: Int? = null,
     val estado: EstadoSesion,
     val observacion: String?,
     val creadaEn: String,           // Fecha ISO-8601
@@ -36,7 +37,8 @@ data class SesionRequestDto(
     val estudiante: String,
     val asistente: String,
     val contenido: String,
-    val actividadId: Long?
+    val actividadId: Long?,
+    val intentosPermitidos: Int? = null
 )
 
 /** Cuerpo del POST /api/sesiones/ingreso. */
@@ -72,7 +74,8 @@ fun SesionDto.aModelo(): SesionAula = SesionAula(
     resultados = resultados.orEmpty().map { it.aModelo() },
     observacion = observacion.orEmpty(),
     finalizadaEn = isoAMilis(finalizadaEn),
-    actividadId = actividadId
+    actividadId = actividadId,
+    intentosPermitidos = intentosPermitidos
 )
 
 fun ResultadoDto.aModelo(): ResultadoIntento = ResultadoIntento(

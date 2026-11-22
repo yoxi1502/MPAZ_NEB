@@ -86,7 +86,10 @@ fun SesionEnCursoScreen(
                         }
                         Text("${sesion.modulo.etiqueta} · ${sesion.contenido}")
                         Text("Estado: ${sesion.estado.etiqueta}")
-                        Text("Prácticas completadas: ${sesion.intentosCompletados}")
+                        Text(
+                            "Prácticas completadas: ${sesion.intentosCompletados}" +
+                                    (sesion.intentosPermitidos?.let { " de $it permitidas" } ?: "")
+                        )
                         sesion.ultimoResultado?.let {
                             Text("Último resultado: ${it.aciertos} aciertos y ${it.errores} errores.")
                         }

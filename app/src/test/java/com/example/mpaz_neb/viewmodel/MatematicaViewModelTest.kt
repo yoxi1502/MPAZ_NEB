@@ -4,6 +4,7 @@ import com.example.mpaz_neb.data.remote.ErrorServidor
 import com.example.mpaz_neb.data.remote.MENSAJE_SIN_CONEXION
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.ResultadoIntento
 import com.example.mpaz_neb.repository.ProgresoRepository
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.util.DatosPrueba.sesion
@@ -108,6 +109,23 @@ class MatematicaViewModelTest {
 
         assertFalse(viewModel.uiState.value.finalizada)
         assertNotNull(viewModel.uiState.value.errorGuardado)
+    }
+
+    @Test
+    fun `con el limite ya alcanzado el resultado no se envia y no se puede repetir`() {
+        val usado = ResultadoIntento(id = "a", aciertos = 1, total = 3, fecha = 0L)
+        coEvery { sesionRepository.obtenerSesionActual() } returns
+                sesion(modulo = ModuloActividad.MATEMATICA, intentosPermitidos = 1, resultados = listOf(usado))
+
+        responderTodo(correctas = 3)
+        viewModel.reiniciarActividad()
+
+        val estado = viewModel.uiState.value
+        assertTrue(estado.finalizada)
+        assertFalse(estado.enviadoAlServidor)
+        assertTrue(estado.sinIntentos)
+        assertEquals(MatematicaViewModel.MENSAJE_SIN_INTENTOS, estado.avisoServidor)
+        coVerify(exactly = 0) { sesionRepository.registrarResultado(any(), any(), any(), any()) }
     }
 
     @Test

@@ -37,6 +37,7 @@ La app es una herramienta de apoyo: **no diagnostica, no califica oficialmente y
 - **Login contra `ms-usuarios`**: la contraseña se verifica en el servidor con BCrypt. El usuario queda recordado en el dispositivo (DataStore) y las rutas del equipo pedagógico están protegidas por perfil.
 - **Catálogo CRUD contra `ms-actividades`**: listar (GET), crear (POST), editar (PUT), activar/desactivar (PATCH) y eliminar con confirmación (DELETE).
 - **Sesiones contra `ms-sesiones`**: el servidor genera el código `MPAZ-XXXXXX` y no permite dos sesiones abiertas para la misma asistente. El estudiante entra con el código y su resultado se envía al terminar. La asistente actualiza el estado en tiempo real, guarda la observación y finaliza la sesión.
+- **Límite de intentos por actividad**: la sesión guarda los intentos permitidos de la actividad asignada. El estudiante ve cuántos le quedan y, al usarlos todos, ya no puede practicar otra vez en esa sesión; `ms-sesiones` rechaza con 409 un intento de más.
 - **Historial en el servidor**: filtro por estudiante (lo aplica el servidor), detalle de intentos, edición de la observación (PATCH) y eliminación de sesiones finalizadas (DELETE).
 - **Premio con PokeAPI**: al terminar la actividad aparece un Pokémon aleatorio (imagen oficial, nombre y tipo en español) con un mensaje de ánimo.
 - **Comunicados con JSONPlaceholder** (Guía 14): GET, POST, PUT y DELETE.

@@ -187,7 +187,8 @@ class SesionAulaViewModel(
                     estudiante = estadoActual.estudiante,
                     asistente = asistente,
                     contenido = actividad.descripcionCorta,
-                    actividadId = actividad.id
+                    actividadId = actividad.id,
+                    intentosPermitidos = actividad.intentosPermitidos
                 )
                 _uiState.update { it.copy(guardando = false, sesion = creada) }
                 onExito()

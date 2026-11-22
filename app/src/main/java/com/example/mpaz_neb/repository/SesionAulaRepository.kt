@@ -54,13 +54,16 @@ class SesionAulaRepository(
         estudiante: String,
         asistente: String,
         contenido: String,
-        actividadId: Long?
+        actividadId: Long?,
+        intentosPermitidos: Int? = null
     ): SesionAula {
         require(curso in CURSOS && estudiante in ESTUDIANTES) {
             "Selecciona un curso y un estudiante de la lista."
         }
         val creada = llamarServidor {
-            api.crear(SesionRequestDto(modulo, curso, estudiante, asistente, contenido, actividadId)).aModelo()
+            api.crear(
+                SesionRequestDto(modulo, curso, estudiante, asistente, contenido, actividadId, intentosPermitidos)
+            ).aModelo()
         }
         dispositivo.guardarSesionActual(creada.id)
         return creada
