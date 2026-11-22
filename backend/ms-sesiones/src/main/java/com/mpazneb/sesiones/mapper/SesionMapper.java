@@ -23,6 +23,7 @@ public final class SesionMapper {
         sesion.setAsistente(request.asistente().trim());
         sesion.setContenido(request.contenido().trim());
         sesion.setActividadId(request.actividadId());
+        sesion.setIntentosPermitidos(request.intentosPermitidos());
         sesion.setEstado(EstadoSesion.CREADA);
         sesion.setObservacion("");
         return sesion;
@@ -38,6 +39,7 @@ public final class SesionMapper {
                 sesion.getModulo(),
                 sesion.getContenido(),
                 sesion.getActividadId(),
+                sesion.getIntentosPermitidos(),
                 sesion.getEstado(),
                 sesion.getObservacion() == null ? "" : sesion.getObservacion(),
                 sesion.getCreadaEn(),

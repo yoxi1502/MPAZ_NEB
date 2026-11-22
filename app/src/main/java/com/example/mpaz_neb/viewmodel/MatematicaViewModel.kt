@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.mpaz_neb.data.local.SesionDispositivoStore
+import com.example.mpaz_neb.data.remote.ErrorServidor
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.MatematicaUiState
 import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.SesionAula
 import com.example.mpaz_neb.model.PreguntaMatematica
 import com.example.mpaz_neb.repository.ProgresoRepository
 import com.example.mpaz_neb.repository.SesionAulaRepository
@@ -150,13 +152,14 @@ class MatematicaViewModel(
                 progresoRepository.guardarMatematica(aciertos = estado.aciertos, total = total)
 
                 // Solo se envía si la sesión abierta en el dispositivo es de Matemática
-                val sesionId = sesionRepository.obtenerSesionActual()
-                    ?.takeIf {
-                        it.modulo == ModuloActividad.MATEMATICA &&
-                                (it.estado == EstadoSesion.EN_CURSO || it.estado == EstadoSesion.COMPLETADA)
-                    }?.id
-                if (sesionId != null) {
-                    sesionRepository.registrarResultado(sesionId, idDelIntento, estado.aciertos, total)
+                val sesion = sesionRepository.obtenerSesionActual()?.takeIf { it.esDeEsteModulo() }
+                // Si ya se usaron todos los intentos no se envía (salvo que sea un reenvío de este mismo intento)
+                val limiteAlcanzado = sesion != null && sesion.sinIntentos &&
+                        sesion.resultados.none { it.id == idDelIntento }
+                val actualizada = if (sesion != null && !limiteAlcanzado) {
+                    sesionRepository.registrarResultado(sesion.id, idDelIntento, estado.aciertos, total)
+                } else {
+                    null
                 }
 
                 _uiState.update { actual ->
@@ -164,11 +167,36 @@ class MatematicaViewModel(
                         finalizada = true,
                         guardando = false,
                         errorGuardado = null,
-                        enviadoAlServidor = sesionId != null
+                        enviadoAlServidor = actualizada != null,
+                        intentosRestantes = (actualizada ?: sesion)?.intentosRestantes,
+                        sinIntentos = (actualizada ?: sesion)?.sinIntentos == true,
+                        avisoServidor = if (limiteAlcanzado) MENSAJE_SIN_INTENTOS else null
                     )
                 }
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
+            } catch (error: ErrorServidor) {
+                if (error.codigoHttp == 409) {
+                    // El servidor rechazó el resultado (límite alcanzado o sesión cerrada): queda solo en el dispositivo
+                    _uiState.update { actual ->
+                        actual.copy(
+                            finalizada = true,
+                            guardando = false,
+                            errorGuardado = null,
+                            enviadoAlServidor = false,
+                            sinIntentos = true,
+                            intentosRestantes = 0,
+                            avisoServidor = error.message
+                        )
+                    }
+                } else {
+                    _uiState.update { actual ->
+                        actual.copy(
+                            guardando = false,
+                            errorGuardado = "No se pudo guardar el resultado. Intenta nuevamente."
+                        )
+                    }
+                }
             } catch (error: Exception) {
                 _uiState.update { actual ->
                     actual.copy(
@@ -185,14 +213,49 @@ class MatematicaViewModel(
             return
         }
 
+        val anterior = _uiState.value
+        // Con el límite de intentos alcanzado no se puede practicar otra vez en esta sesión
+        if (anterior.sinIntentos) {
+            return
+        }
+
         intentoId = UUID.randomUUID().toString()
 
         _uiState.value = MatematicaUiState(
             preguntas = preguntas
+        ).copy(
+            intentosRestantes = anterior.intentosRestantes
         )
     }
 
+    /** Lee la sesión abierta para saber cuántos intentos quedan antes de comenzar. */
+    fun cargarIntentos() {
+        viewModelScope.launch {
+            val sesion = try {
+                sesionRepository.obtenerSesionActual()?.takeIf { it.esDeEsteModulo() }
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (error: Exception) {
+                // Sin conexión no se bloquea la práctica; el servidor valida al enviar
+                null
+            }
+            _uiState.update { actual ->
+                actual.copy(
+                    intentosRestantes = sesion?.intentosRestantes,
+                    sinIntentos = sesion?.sinIntentos == true
+                )
+            }
+        }
+    }
+
+    private fun SesionAula.esDeEsteModulo(): Boolean =
+        modulo == ModuloActividad.MATEMATICA &&
+                (estado == EstadoSesion.EN_CURSO || estado == EstadoSesion.COMPLETADA)
+
     companion object {
+        const val MENSAJE_SIN_INTENTOS =
+            "Ya usaste todos los intentos de esta actividad. Este resultado quedó solo en el dispositivo."
+
         /** Entrega al ViewModel sus repositorios (necesitan el Context para DataStore). */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

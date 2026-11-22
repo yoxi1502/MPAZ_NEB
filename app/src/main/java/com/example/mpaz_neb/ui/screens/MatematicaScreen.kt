@@ -37,6 +37,7 @@ import com.example.mpaz_neb.navigation.NavigationEvent
 import com.example.mpaz_neb.viewmodel.MatematicaViewModel
 import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
 import com.example.mpaz_neb.viewmodel.PremioPokemonViewModel
+import com.example.mpaz_neb.ui.components.AvisoIntentos
 import com.example.mpaz_neb.ui.components.PremioPokemon
 import com.example.mpaz_neb.nativo.LectorVoz
 import com.example.mpaz_neb.ui.components.BotonEscuchar
@@ -66,6 +67,11 @@ fun MatematicaScreen(
 
     // Recurso nativo: texto a voz
     val lector = rememberLectorVoz()
+
+    // Límite de intentos de la sesión asignada
+    LaunchedEffect(Unit) {
+        matematicaViewModel.cargarIntentos()
+    }
 
     var confirmarEnvio by rememberSaveable { mutableStateOf(false) }
 
@@ -223,6 +229,8 @@ fun MatematicaScreen(
                 when {
                     !actividadIniciada -> {
                         InicioMatematica(
+                            intentosRestantes = estado.intentosRestantes,
+                            sinIntentos = estado.sinIntentos,
                             onComenzar = {
                                 matematicaViewModel.reiniciarActividad()
                                 actividadIniciada = true
@@ -282,6 +290,8 @@ fun MatematicaScreen(
 
 @Composable
 private fun InicioMatematica(
+    intentosRestantes: Int?,
+    sinIntentos: Boolean,
     onComenzar: () -> Unit
 ) {
     Surface(
@@ -352,8 +362,14 @@ private fun InicioMatematica(
                 fontSize = 17.sp
             )
 
+            AvisoIntentos(
+                intentosRestantes = intentosRestantes,
+                sinIntentos = sinIntentos
+            )
+
             Button(
                 onClick = onComenzar,
+                enabled = !sinIntentos,
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 60.dp),
@@ -692,7 +708,13 @@ private fun ResultadoMatematica(
         onReintentar = onReintentarPremio
     )
 
-    Button(
+    AvisoIntentos(
+        intentosRestantes = estado.intentosRestantes,
+        sinIntentos = estado.sinIntentos,
+        aviso = estado.avisoServidor
+    )
+
+    if (!estado.sinIntentos) Button(
         onClick = onRepetir,
         modifier = Modifier
             .fillMaxWidth()

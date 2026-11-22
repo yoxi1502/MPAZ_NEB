@@ -36,6 +36,7 @@ import com.example.mpaz_neb.model.PremioPokemonUiState
 import com.example.mpaz_neb.viewmodel.LecturaViewModel
 import com.example.mpaz_neb.viewmodel.PreferenciasViewModel
 import com.example.mpaz_neb.viewmodel.PremioPokemonViewModel
+import com.example.mpaz_neb.ui.components.AvisoIntentos
 import com.example.mpaz_neb.ui.components.PremioPokemon
 import com.example.mpaz_neb.nativo.LectorVoz
 import com.example.mpaz_neb.ui.components.BotonEscuchar
@@ -64,6 +65,11 @@ fun LecturaScreen(
 
     // Recurso nativo: texto a voz
     val lector = rememberLectorVoz()
+
+    // Límite de intentos de la sesión asignada
+    LaunchedEffect(Unit) {
+        lecturaViewModel.cargarIntentos()
+    }
 
     var confirmarEnvio by rememberSaveable { mutableStateOf(false) }
 
@@ -151,6 +157,8 @@ fun LecturaScreen(
                     !actividadIniciada -> {
                         InicioActividadLectura(
                             titulo = estado.titulo,
+                            intentosRestantes = estado.intentosRestantes,
+                            sinIntentos = estado.sinIntentos,
                             onComenzar = {
                                 lecturaViewModel.reiniciarActividad()
                                 actividadIniciada = true
@@ -281,6 +289,8 @@ fun LecturaScreen(
 @Composable
 private fun InicioActividadLectura(
     titulo: String,
+    intentosRestantes: Int?,
+    sinIntentos: Boolean,
     onComenzar: () -> Unit
 ) {
     Column(
@@ -352,8 +362,14 @@ private fun InicioActividadLectura(
                     lineHeight = 30.sp
                 )
 
+                AvisoIntentos(
+                    intentosRestantes = intentosRestantes,
+                    sinIntentos = sinIntentos
+                )
+
                 Button(
                     onClick = onComenzar,
+                    enabled = !sinIntentos,
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 58.dp),
@@ -745,7 +761,13 @@ private fun ResultadoLectura(
             onReintentar = onReintentarPremio
         )
 
-        Button(
+        AvisoIntentos(
+            intentosRestantes = estado.intentosRestantes,
+            sinIntentos = estado.sinIntentos,
+            aviso = estado.avisoServidor
+        )
+
+        if (!estado.sinIntentos) Button(
             onClick = onRepetir,
             modifier = Modifier
                 .widthIn(max = 600.dp)

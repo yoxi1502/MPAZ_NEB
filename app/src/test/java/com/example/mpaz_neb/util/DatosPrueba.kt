@@ -8,6 +8,7 @@ import com.example.mpaz_neb.model.Dificultad
 import com.example.mpaz_neb.model.EstadoActividad
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.ResultadoIntento
 import com.example.mpaz_neb.model.SesionAula
 
 /** Datos ficticios reutilizables en las pruebas. */
@@ -58,7 +59,9 @@ object DatosPrueba {
         modulo: ModuloActividad = ModuloActividad.LECTURA,
         estado: EstadoSesion = EstadoSesion.EN_CURSO,
         observacion: String = "",
-        creadaEn: Long = 1_000L
+        creadaEn: Long = 1_000L,
+        intentosPermitidos: Int? = null,
+        resultados: List<ResultadoIntento> = emptyList()
     ) = SesionAula(
         id = id,
         codigo = "MPAZ-AB12CD",
@@ -70,7 +73,9 @@ object DatosPrueba {
         estado = estado,
         creadaEn = creadaEn,
         observacion = observacion,
-        actividadId = 1L
+        actividadId = 1L,
+        intentosPermitidos = intentosPermitidos,
+        resultados = resultados
     )
 
     fun sesionDto(id: Long = 10L, estado: EstadoSesion = EstadoSesion.CREADA) = SesionDto(

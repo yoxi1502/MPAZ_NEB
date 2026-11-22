@@ -36,9 +36,18 @@ data class SesionAula(
     val resultados: List<ResultadoIntento> = emptyList(),
     val observacion: String = "",
     val finalizadaEn: Long? = null,
-    val actividadId: Long? = null
+    val actividadId: Long? = null,
+    /** Intentos que permite la actividad asignada. Null = sin límite (sesiones antiguas). */
+    val intentosPermitidos: Int? = null
 ) {
     val ultimoResultado: ResultadoIntento? get() = resultados.lastOrNull()
     val intentosCompletados: Int get() = resultados.size
+
+    /** Intentos que quedan, o null si la sesión no tiene límite. */
+    val intentosRestantes: Int?
+        get() = intentosPermitidos?.let { (it - intentosCompletados).coerceAtLeast(0) }
+
+    /** True cuando la sesión tiene límite y ya se usaron todos los intentos. */
+    val sinIntentos: Boolean get() = intentosRestantes == 0
     val abierta: Boolean get() = estado != EstadoSesion.FINALIZADA
 }

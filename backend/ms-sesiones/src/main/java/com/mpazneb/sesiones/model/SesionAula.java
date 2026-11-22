@@ -57,6 +57,9 @@ public class SesionAula {
     /** Id de la actividad en ms-actividades (referencia entre microservicios). */
     private Long actividadId;
 
+    /** Intentos que permite la actividad asignada. Null = sin límite (sesiones antiguas). */
+    private Integer intentosPermitidos;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EstadoSesion estado;
@@ -88,5 +91,10 @@ public class SesionAula {
 
     public boolean estaAbierta() {
         return estado != EstadoSesion.FINALIZADA;
+    }
+
+    /** True si la sesión tiene límite y ya se registraron todos los intentos permitidos. */
+    public boolean sinIntentosDisponibles() {
+        return intentosPermitidos != null && resultados.size() >= intentosPermitidos;
     }
 }

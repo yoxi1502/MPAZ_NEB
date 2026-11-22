@@ -4,6 +4,7 @@ import com.example.mpaz_neb.data.remote.ErrorServidor
 import com.example.mpaz_neb.data.remote.MENSAJE_SIN_CONEXION
 import com.example.mpaz_neb.model.EstadoSesion
 import com.example.mpaz_neb.model.ModuloActividad
+import com.example.mpaz_neb.model.ResultadoIntento
 import com.example.mpaz_neb.repository.ProgresoRepository
 import com.example.mpaz_neb.repository.SesionAulaRepository
 import com.example.mpaz_neb.util.DatosPrueba.sesion
@@ -141,6 +142,64 @@ class LecturaViewModelTest {
     }
 
     @Test
+    fun `al usar el ultimo intento permitido ya no se puede practicar otra vez`() {
+        coEvery { sesionRepository.obtenerSesionActual() } returns sesion(intentosPermitidos = 1)
+        coEvery { sesionRepository.registrarResultado(10, any(), 3, 3) } returns
+                sesion(estado = EstadoSesion.COMPLETADA, intentosPermitidos = 1, resultados = listOf(intento("a")))
+
+        responderTodo(correctas = 3)
+        viewModel.reiniciarActividad()
+
+        val estado = viewModel.uiState.value
+        assertTrue(estado.enviadoAlServidor)
+        assertTrue(estado.sinIntentos)
+        assertEquals(0, estado.intentosRestantes)
+        // reiniciar no tuvo efecto: sigue en la pantalla de resultado
+        assertTrue(estado.finalizada)
+    }
+
+    @Test
+    fun `con el limite ya alcanzado el resultado no se envia al servidor`() {
+        coEvery { sesionRepository.obtenerSesionActual() } returns
+                sesion(intentosPermitidos = 2, resultados = listOf(intento("a"), intento("b")))
+
+        responderTodo(correctas = 2)
+
+        val estado = viewModel.uiState.value
+        assertTrue(estado.finalizada)
+        assertFalse(estado.enviadoAlServidor)
+        assertTrue(estado.sinIntentos)
+        assertEquals(LecturaViewModel.MENSAJE_SIN_INTENTOS, estado.avisoServidor)
+        coVerify(exactly = 0) { sesionRepository.registrarResultado(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `si el servidor rechaza el intento con 409 se muestra su mensaje`() {
+        coEvery { sesionRepository.obtenerSesionActual() } returns sesion(intentosPermitidos = 2)
+        coEvery { sesionRepository.registrarResultado(10, any(), any(), any()) } throws
+                ErrorServidor("Ya se usaron los 2 intentos permitidos de esta actividad.", 409)
+
+        responderTodo(correctas = 1)
+
+        val estado = viewModel.uiState.value
+        assertTrue(estado.finalizada)
+        assertNull(estado.errorGuardado)
+        assertTrue(estado.sinIntentos)
+        assertEquals("Ya se usaron los 2 intentos permitidos de esta actividad.", estado.avisoServidor)
+    }
+
+    @Test
+    fun `cargar intentos informa cuantos quedan en la sesion de lectura`() {
+        coEvery { sesionRepository.obtenerSesionActual() } returns
+                sesion(intentosPermitidos = 3, resultados = listOf(intento("a")))
+
+        viewModel.cargarIntentos()
+
+        assertEquals(2, viewModel.uiState.value.intentosRestantes)
+        assertFalse(viewModel.uiState.value.sinIntentos)
+    }
+
+    @Test
     fun `reiniciar vuelve a la primera pregunta`() {
         coEvery { sesionRepository.obtenerSesionActual() } returns null
         responderTodo(correctas = 3)
@@ -152,4 +211,6 @@ class LecturaViewModelTest {
         assertEquals(0, estado.indiceActual)
         assertEquals(0, estado.aciertos)
     }
+
+    private fun intento(id: String) = ResultadoIntento(id = id, aciertos = 2, total = 3, fecha = 0L)
 }

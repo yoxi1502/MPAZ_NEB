@@ -15,6 +15,7 @@ public record SesionResponse(
         Modulo modulo,
         String contenido,
         Long actividadId,
+        Integer intentosPermitidos,
         EstadoSesion estado,
         String observacion,
         Instant creadaEn,

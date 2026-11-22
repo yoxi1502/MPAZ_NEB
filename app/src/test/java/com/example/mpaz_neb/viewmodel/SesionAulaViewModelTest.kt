@@ -89,13 +89,13 @@ class SesionAulaViewModelTest {
 
         assertNotNull(viewModel.uiState.value.errorCurso)
         assertNotNull(viewModel.uiState.value.errorEstudiante)
-        coVerify(exactly = 0) { sesionRepository.crearSesion(any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { sesionRepository.crearSesion(any(), any(), any(), any(), any(), any(), any()) }
     }
 
     @Test
     fun `generar codigo crea la sesion con la actividad elegida`() {
         coEvery {
-            sesionRepository.crearSesion(ModuloActividad.LECTURA, CURSO, ESTUDIANTE, ASISTENTE, any(), 1L)
+            sesionRepository.crearSesion(ModuloActividad.LECTURA, CURSO, ESTUDIANTE, ASISTENTE, any(), 1L, 2)
         } returns sesion(estado = EstadoSesion.CREADA)
         seleccionarTodo()
         viewModel.seleccionarActividad(actividad(id = 1))
@@ -110,7 +110,7 @@ class SesionAulaViewModelTest {
 
     @Test
     fun `si ya hay una sesion abierta se muestra el 409 del servidor`() {
-        coEvery { sesionRepository.crearSesion(any(), any(), any(), any(), any(), any()) } throws
+        coEvery { sesionRepository.crearSesion(any(), any(), any(), any(), any(), any(), any()) } throws
                 ErrorServidor("Finaliza la sesión actual antes de generar otra.", 409)
         seleccionarTodo()
         var exito = false
