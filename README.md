@@ -148,8 +148,8 @@ cd backend\ms-actividades
 .\gradlew.bat test
 ```
 
-- **App:** 117 pruebas en 16 clases, con **90 % de cobertura de líneas en la lógica** (ViewModels, repositorios, modelos, DTO y validaciones). Se simulan con MockK los repositorios y las interfaces de Retrofit, así se prueban el éxito, la falta de conexión y los errores 404/409 sin depender del servidor.
-- **Microservicios:** 57 pruebas (`ms-actividades` 17, `ms-sesiones` 25, `ms-usuarios` 15).
+- **App:** 116 pruebas en 16 clases, con **88 % de cobertura de líneas en la lógica** (ViewModels, repositorios, modelos, DTO y validaciones). Se simulan con MockK los repositorios y las interfaces de Retrofit, así se prueban el éxito, la falta de conexión y los errores 404/409 sin depender del servidor.
+- **Microservicios:** 70 pruebas (`ms-actividades` 17, `ms-sesiones` 28, `ms-usuarios` 25).
 
 ## 6. APK firmado y llave `.jks`
 
